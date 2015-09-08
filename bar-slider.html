@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <title>Bar Slider</title>
+        <style type="text/css">
+            * {
+                padding: 0;
+                margin: 0;
+            }
+            
+            body {
+                padding: 10px;
+            }
+        </style>
+        <link rel="stylesheet" href="bar-slider.css" type="text/css" />
+        <link rel="stylesheet" href="bs-es.css" type="text/css" />
+        <script type="text/javascript" src="jquery-1.11.3.min.js"></script>
+        <script type="text/javascript" src="jquery.domxy.js"></script>
+        <script type="text/javascript" src="jquery-bar-slider.js"></script>
+    </head>
+    <body>
+        <!-- Template by Jaycliff Arcilla -->
+        <span id="bs-structure-template" class="bar-slider bs-horizontal-type bs-wrap">
+            <span class="bs-range-base">
+                <span class="bs-range-bar"></span>
+                <span class="bs-range-cover"></span>
+            </span>
+        </span>
+        <script type="text/javascript">
+            var bs = $.createBarSlider(), slider = bs;
+            bs.switchTo('#bs-structure-template');
+        </script>
+    </body>
+</html>

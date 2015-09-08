@@ -1,0 +1,27 @@
+.bar-slider {
+    background-color: transparent;
+    border: solid 1px #c0c0c0;
+    border-radius: 4px;
+}
+.bs-horizontal-type {
+    height: 20px;
+    padding: 2px 8px;
+    width: 300px;
+}
+.bs-range-base {
+    border: solid 1px #c0c0c0;
+}
+.bs-range-bar {
+    background-color: #c0c0c0;
+    width: 20%;
+}
+.bs-range-bar.active {
+    background-color: #c8c8c8;
+}
+.bs-horizontal-type .bs-transition .bs-range-bar {
+    transition: width 0.2s;
+    -moz-transition: width 0.2s;
+    -webkit-transition: width 0.2s;
+    -ms-transition: width 0.2s;
+    -o-transition: width 0.2s;
+}
