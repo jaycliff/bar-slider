@@ -27,7 +27,7 @@ span.bar-slider span.bs-range-bar {
     display: block !important;
     left: 0 !important;
     margin: 0 !important;
-    max-width: 100%;
+    max-width: 100% !important;
     position: absolute !important;
     right: auto !important;
     top: 0 !important;
@@ -38,7 +38,7 @@ span.bar-slider span.bs-range-cover {
     display: block !important;
     left: 0 !important;
     margin: 0 !important;
-    max-width: 100%;
+    max-width: 100% !important;
     position: absolute !important;
     right: 0 !important;
     top: 0 !important;
