@@ -18,6 +18,7 @@
         jQuery library
         domxy
 */
+/*global Boolean, Math, Number, document, window, jQuery, module*/
 /*jshint bitwise: false*/
 if (typeof Number.toInteger !== "function") {
     Number.toInteger = function (arg) {
@@ -78,15 +79,15 @@ if (typeof Number.toInteger !== "function") {
         }
         initializeParts();
         // Some utilities
-        function addTransitionClass() {
-            //console.log('addTransitionClass');
-            $bs_range_base.addClass('bs-transition').on('transitionend', removeTransitionClass);
-            transition_class_added = true;
-        }
         function removeTransitionClass() {
             //console.log('removeTransitionClass');
             $bs_range_base.removeClass('bs-transition').off('transitionend', removeTransitionClass);
             transition_class_added = false;
+        }
+        function addTransitionClass() {
+            //console.log('addTransitionClass');
+            $bs_range_base.addClass('bs-transition').on('transitionend', removeTransitionClass);
+            transition_class_added = true;
         }
         // Updates the slider UI
         function refreshControls(animate) {
