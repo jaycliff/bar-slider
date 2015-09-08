@@ -8,12 +8,22 @@
     padding: 2px 8px;
     width: 300px;
 }
+.bs-vertical-type {
+    height: 300px;
+    padding: 8px 2px;
+    width: 20px;
+}
 .bs-range-base {
     border: solid 1px #c0c0c0;
 }
 .bs-range-bar {
     background-color: #c0c0c0;
-    width: 20%;
+}
+.bs-horizontal-type .bs-range-bar {
+    width: 50%;
+}
+.bs-vertical-type .bs-range-bar {
+    height: 50%;
 }
 .bs-range-bar.active {
     background-color: #c8c8c8;
@@ -24,4 +34,11 @@
     -webkit-transition: width 0.2s;
     -ms-transition: width 0.2s;
     -o-transition: width 0.2s;
+}
+.bs-vertical-type .bs-transition .bs-range-bar {
+    transition: height 0.2s;
+    -moz-transition: height 0.2s;
+    -webkit-transition: height 0.2s;
+    -ms-transition: height 0.2s;
+    -o-transition: height 0.2s;
 }

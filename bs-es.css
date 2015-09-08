@@ -27,10 +27,17 @@ span.bar-slider span.bs-range-bar {
     display: block !important;
     left: 0 !important;
     margin: 0 !important;
-    max-width: 100% !important;
     position: absolute !important;
+}
+span.bar-slider.bs-horizontal-type span.bs-range-bar {
+    max-width: 100% !important;
     right: auto !important;
     top: 0 !important;
+}
+span.bar-slider.bs-vertical-type span.bs-range-bar {
+    max-height: 100% !important;
+    right: 0 !important;
+    top: auto !important;
 }
 span.bar-slider span.bs-range-cover {
     border: none !important;
