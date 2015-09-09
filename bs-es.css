@@ -16,6 +16,7 @@ span.bar-slider span.bs-range-base {
     height: 100% !important;
     margin: 0 !important;
     overflow: hidden !important;
+    padding: 0 !important;
     position: relative !important;
     right: auto !important;
     top: auto !important;
