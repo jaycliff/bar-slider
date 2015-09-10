@@ -14,50 +14,52 @@
     limitations under the License.
 */
 /*jslint browser: true, devel: true */
-/*global jQuery*/
-(function (window, $) {
+/*global jQuery, module*/
+(function ($, undef) {
     "use strict";
     var extend_options;
     function getWindow(elem) {
-    	return jQuery.isWindow(elem) ? elem : elem.nodeType === 9 ? elem.defaultView || elem.parentWindow : false;
+        return jQuery.isWindow(elem) ? elem : elem.nodeType === 9 ? elem.defaultView || elem.parentWindow : false;
     }
     function getDOMX(elem) {
         var doc_elem,
             win,
-            box,
+            left = 0,
             doc = elem && elem.ownerDocument;
         if (!doc) {
             return;
         }
         doc_elem = doc.documentElement;
-        // Make sure it's not a disconnected DOM node and...
-        // If we don't have gBCR, just use 0 rather than error
-        // BlackBerry 5, iOS 3 (original iPhone)
-        if (!jQuery.contains(doc_elem, elem) || typeof elem.getBoundingClientRect !== "function") {
+        // Make sure it's not a disconnected DOM node
+        if (!jQuery.contains(doc_elem, elem)) {
             return 0;
         }
-        box = elem.getBoundingClientRect();
+        // Compare to undefined instead of equating to "function" because getBoundingClientRect is an object (not a function) in older (and retarded) versions of IE.
+        if (elem.getBoundingClientRect !== undef) {
+            left = elem.getBoundingClientRect().left;
+        }
         win = getWindow(doc);
-        return box.left + (win.pageXOffset || doc_elem.scrollLeft) - (doc_elem.clientLeft || 0);
+        return left + (win.pageXOffset || doc_elem.scrollLeft) - (doc_elem.clientLeft || 0);
     }
     function getDOMY(elem) {
         var doc_elem,
             win,
-            box,
+            top = 0,
             doc = elem && elem.ownerDocument;
         if (!doc) {
             return;
         }
         doc_elem = doc.documentElement;
-        // Make sure it's not a disconnected DOM node and...
-        // If we don't have gBCR, just use 0 rather than error
-        // BlackBerry 5, iOS 3 (original iPhone)
-        if (!jQuery.contains(doc_elem, elem) || typeof elem.getBoundingClientRect !== "function") {
+        // Make sure it's not a disconnected DOM node
+        if (!jQuery.contains(doc_elem, elem)) {
             return 0;
         }
-        box = elem.getBoundingClientRect();
+        // Compare to undefined instead of equating to "function" because getBoundingClientRect is an object (not a function) in older (and retarded) versions of IE.
+        if (elem.getBoundingClientRect !== undef) {
+            top = elem.getBoundingClientRect().top;
+        }
         win = getWindow(doc);
-        return box.top  + (win.pageYOffset || doc_elem.scrollTop) - (doc_elem.clientTop || 0);
+        return top + (win.pageYOffset || doc_elem.scrollTop) - (doc_elem.clientTop || 0);
     }
     extend_options = {
         getX: function getX() {
@@ -77,4 +79,4 @@
     $.fn.extend(extend_options);
     $.getDOMX = getDOMX;
     $.getDOMY = getDOMY;
-}(window, (typeof jQuery === "function" && jQuery) || (typeof module === "object" && typeof module.exports === "function" && module.exports)));
+}((typeof jQuery === "function" && jQuery) || (typeof module === "object" && typeof module.exports === "function" && module.exports)));

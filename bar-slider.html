@@ -15,7 +15,8 @@
         </style>
         <link rel="stylesheet" href="bar-slider.css" type="text/css" />
         <link rel="stylesheet" href="bs-es.css" type="text/css" />
-        <script type="text/javascript" src="jquery-1.11.3.min.js"></script>
+        <!-- <script type="text/javascript" src="jquery-1.11.3.min.js"></script> -->
+        <script type="text/javascript" src="jquery-1.11.3.js"></script>
         <script type="text/javascript" src="jquery.domxy.js"></script>
         <script type="text/javascript" src="jquery-bar-slider.js"></script>
     </head>
@@ -29,8 +30,13 @@
                 </span>
             </span>
             <script type="text/javascript">
-                var bs = $.createBarSlider(), slider = bs;
-                bs.switchTo('#bs-structure-template-1');
+                var slider = $.createBarSlider();
+                slider.switchTo('#bs-structure-template-1');
+                slider.on('input', function (event, value) {
+                    console.log('input: ' + value);
+                }).on('change', function (event, value) {
+                    console.log('change: ' + value);
+                });
             </script>
         </div>
         <div>
@@ -41,8 +47,13 @@
                 </span>
             </span>
             <script type="text/javascript">
-                var bs = $.createBarSlider({ type: 'vertical', max: 50, min: -100, value: 200 }), slider2 = bs;
-                bs.switchTo('#bs-structure-template-2');
+                var slider2 = $.createBarSlider({ type: 'vertical', max: 50, min: -100, value: 200 });
+                slider2.switchTo('#bs-structure-template-2');
+                slider2.on('input', function (event, value) {
+                    console.log('input: ' + value);
+                }).on('change', function (event, value) {
+                    console.log('change: ' + value);
+                });
             </script>
         </div>
     </body>

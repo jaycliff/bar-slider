@@ -19,7 +19,7 @@
         domxy
 */
 /*global Boolean, Math, Number, document, window, jQuery, module*/
-/*jshint bitwise: false*/
+/*jshint bitwise: false, unparam: true*/
 if (typeof Number.toInteger !== "function") {
     Number.toInteger = function (arg) {
         "use strict";
@@ -34,7 +34,7 @@ if (typeof String.prototype.trim !== "function") {
         return this.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
     };
 }
-(function (window, $, undefined) {
+(function (window, $, undef) {
     "use strict";
     var $document = $(document),
         $window = $(window),
@@ -82,9 +82,11 @@ if (typeof String.prototype.trim !== "function") {
             default_val,
             min_value = default_min_val,
             max_value = default_max_val,
+            max_sub,
             value,
-            prev_input_value = value,
-            prev_change_value = value,
+            value_sub,
+            prev_input_value,
+            prev_change_value,
             bar_slider_object,
             $bar_slider_object;
         if (is_options_valid && Object.prototype.hasOwnProperty.call(options, 'max')) {
@@ -92,9 +94,13 @@ if (typeof String.prototype.trim !== "function") {
             max_value = default_max_val;
         }
         if (is_options_valid && Object.prototype.hasOwnProperty.call(options, 'value')) {
+            max_sub = max_value;
+            if ((max_sub < min_value) && (min_value < 100)) {
+                max_sub = 100;
+            }
             default_val = Number(options.value) || 0;
-            if (default_val > max_value) {
-                default_val = max_value;
+            if (default_val > max_sub) {
+                default_val = max_sub;
             }
             if (default_val < min_value) {
                 default_val = min_value;
@@ -102,8 +108,14 @@ if (typeof String.prototype.trim !== "function") {
         }
         default_val = (min_value >= max_value) ? min_value : (min_value + ((max_value - min_value) / 2));
         value = default_val;
+        prev_input_value = value;
+        prev_change_value = value;
         function initializeParts() {
-            $bs_wrap.addClass('bar-slider').addClass(type_class).addClass('bs-wrap').attr('tabindex', tab_index);
+            $bs_wrap
+                .addClass('bar-slider')
+                .addClass(type_class)
+                .addClass('bs-wrap')
+                .attr('tabindex', tab_index);
             $bs_range_base.addClass('bs-range-base');
             $bs_range_bar.addClass('bs-range-bar');
             $bs_range_cover.addClass('bs-range-cover');
@@ -115,27 +127,39 @@ if (typeof String.prototype.trim !== "function") {
         // Some utilities
         function removeTransitionClass() {
             //console.log('removeTransitionClass');
-            $bs_range_base.removeClass('bs-transition').off('transitionend', removeTransitionClass);
+            $bs_range_base
+                .removeClass('bs-transition')
+                .off('transitionend', removeTransitionClass);
             transition_class_added = false;
         }
         function addTransitionClass() {
             //console.log('addTransitionClass');
-            $bs_range_base.addClass('bs-transition').on('transitionend', removeTransitionClass);
+            $bs_range_base
+                .addClass('bs-transition')
+                .on('transitionend', removeTransitionClass);
             transition_class_added = true;
         }
         // Updates the slider UI
         function refreshControls(animate) {
-            var rate, max = max_value;
+            var rate;
             if ($bs_wrap[0].parentNode === null) {
                 return; // Bail out since it's not attached to the DOM
             }
-            if (max < min_value) {
-                max = 100;
+            max_sub = max_value;
+            if ((max_sub < min_value) && (min_value < 100)) {
+                max_sub = 100;
             }
-            if (max <= min_value) {
+            if (max_sub <= min_value) {
                 rate = 0;
             } else {
-                rate = ((value - min_value) / (max - min_value));
+                value_sub = value;
+                if (value_sub > max_sub) {
+                    value_sub = max_sub;
+                }
+                if (value_sub < min_value) {
+                    value_sub = min_value;
+                }
+                rate = ((value_sub - min_value) / (max_sub - min_value));
             }
             if (!!animate && (disabled === false) && (transition_class_added === false)) {
                 addTransitionClass();
@@ -154,42 +178,28 @@ if (typeof String.prototype.trim !== "function") {
             min: function (val) {
                 if (arguments.length > 0) {
                     min_value = Number(val) || 0;
-                    if (value < min_value) {
-                        value = min_value;
-                    }
                     refreshControls(true);
                     return bar_slider_object;
                 }
                 return min_value;
             },
             max: function (val) {
-                var max;
                 if (arguments.length > 0) {
                     max_value = Number(val) || 0;
-                    if (max_value >= min_value) {
-                        if (value > max_value) {
-                            value = max_value;
-                        }
-                    } else {
-                        max = 100;
-                        if (max > min_value) {
-                            if (value > max) {
-                                value = max;
-                            }
-                        } else {
-                            value = min_value;
-                        }
-                    }
                     refreshControls(true);
                     return bar_slider_object;
                 }
                 return max_value;
             },
             value: function (val) {
+                max_sub = max_value;
+                if ((max_sub < min_value) && (min_value < 100)) {
+                    max_sub = 100;
+                }
                 if (arguments.length > 0) {
                     val = Number(val) || 0;
-                    if (val > max_value) {
-                        val = max_value;
+                    if (val > max_sub) {
+                        val = max_sub;
                     }
                     if (val < min_value) {
                         val = min_value;
@@ -200,7 +210,14 @@ if (typeof String.prototype.trim !== "function") {
                     refreshControls(true);
                     return bar_slider_object;
                 }
-                return value;
+                value_sub = value;
+                if (value_sub > max_sub) {
+                    value_sub = max_sub;
+                }
+                if (value_sub < min_value) {
+                    value_sub = min_value;
+                }
+                return value_sub;
             },
             attachTo: function (arg) {
                 $bs_wrap.appendTo(arg);
@@ -218,7 +235,7 @@ if (typeof String.prototype.trim !== "function") {
                 $target = $target.replaceWith($bs_wrap);
                 removeTransitionClass();
                 refreshControls();
-                return $target;
+                return bar_slider_object;
             },
             refresh: refreshControls,
             getElement: function () {
@@ -230,7 +247,7 @@ if (typeof String.prototype.trim !== "function") {
         (function () {
             var mouseDownMouseMoveHandler, docWinEventHandler, prevX = 0, prevY = 0;
             /*
-                The nowX-prevX-prevY tandem is a hack for browsers with stupid mousemove event implementation (Chrome, I'm looking at you!).
+                The nowX-nowY-prevX-prevY tandem is a hack for browsers with stupid mousemove event implementation (Chrome, I'm looking at you!).
                 What is this stupidity you're talking about?
                     Some browsers fire a single mousemove event of an element everytime a mousedown event of that same element fires.
                 LINK(S):
@@ -238,6 +255,7 @@ if (typeof String.prototype.trim !== "function") {
             */
             mouseDownMouseMoveHandler = function (event) {
                 var nowX, nowY, base, dimension, rate;
+                event.preventDefault(); // This somehow disables text-selection
                 switch (event.type) {
                 case 'touchstart':
                     //console.log('touchstart');
@@ -246,7 +264,6 @@ if (typeof String.prototype.trim !== "function") {
                     event.pageY = event.originalEvent.touches[0].pageY;
                     /* falls through */
                 case 'mousedown':
-                    event.preventDefault(); // This somehow disables text-selection
                     // Disable right-click
                     if (event.which === 3) {
                         return;
@@ -260,7 +277,9 @@ if (typeof String.prototype.trim !== "function") {
                     $bs_range_bar.addClass('active');
                     prevX = nowX;
                     prevY = nowY;
-                    $document.on('mousemove touchmove', mouseDownMouseMoveHandler).on('mouseup touchend', docWinEventHandler);
+                    $document
+                        .on('mousemove touchmove', mouseDownMouseMoveHandler)
+                        .on('mouseup touchend', docWinEventHandler);
                     $window.on('blur', docWinEventHandler);
                     break;
                 case 'touchmove':
@@ -295,16 +314,30 @@ if (typeof String.prototype.trim !== "function") {
                 }
                 rate = base / dimension;
                 //$bs_range_bar.css(css_dimension_prop, (rate * 100) + '%');
-                prev_input_value = value;
-                value = min_value + (rate * (max_value - min_value));
-                refreshControls(true);
-                if (disabled === false) {
-                    if (value !== prev_input_value) {
-                        trigger_param_list.push(value);
-                        $bar_slider_object.triggerHandler('input', trigger_param_list);
-                        trigger_param_list.length = 0;
+                max_sub = max_value;
+                if ((max_sub < min_value) && (min_value < 100)) {
+                    max_sub = 100;
+                }
+                if (max_sub >= min_value) {
+                    //prev_input_value = value;
+                    value_sub = value;
+                    if (value_sub > max_sub) {
+                        value_sub = max_sub;
+                    }
+                    if (value_sub < min_value) {
+                        value_sub = min_value;
+                    }
+                    prev_input_value = value_sub;
+                    value = min_value + (rate * (max_sub - min_value));
+                    if (disabled === false) {
+                        if (value !== prev_input_value) {
+                            trigger_param_list.push(value);
+                            $bar_slider_object.triggerHandler('input', trigger_param_list);
+                            trigger_param_list.length = 0;
+                        }
                     }
                 }
+                refreshControls(true);
             };
             docWinEventHandler = function () {
                 //console.log('docWinEventHandler');
@@ -319,7 +352,9 @@ if (typeof String.prototype.trim !== "function") {
                 }
                 $bs_range_bar.removeClass('active');
                 $window.off('blur', docWinEventHandler);
-                $document.off('mousemove touchmove', mouseDownMouseMoveHandler).off('mouseup touchend', docWinEventHandler);
+                $document
+                    .off('mousemove touchmove', mouseDownMouseMoveHandler)
+                    .off('mouseup touchend', docWinEventHandler);
             };
             function enableDisableAid(event) {
                 switch (event.type) {
@@ -373,10 +408,19 @@ if (typeof String.prototype.trim !== "function") {
                 if (parentNode !== null) {
                     $bs_wrap.detach();
                 }
-                $bs_wrap.removeAttr('class').removeAttr('style').removeAttr('tabindex');
-                $bs_range_base.removeAttr('class').removeAttr('style');
-                $bs_range_bar.removeAttr('class').removeAttr('style');
-                $bs_range_cover.removeAttr('class').removeAttr('style');
+                $bs_wrap
+                    .removeAttr('class')
+                    .removeAttr('style')
+                    .removeAttr('tabindex');
+                $bs_range_base
+                    .removeAttr('class')
+                    .removeAttr('style');
+                $bs_range_bar
+                    .removeAttr('class')
+                    .removeAttr('style');
+                $bs_range_cover
+                    .removeAttr('class')
+                    .removeAttr('style');
                 initializeParts();
                 if (parentNode !== null) {
                     $bs_wrap.appendTo(parentNode);
@@ -395,6 +439,8 @@ if (typeof String.prototype.trim !== "function") {
                 min_value = default_min_val;
                 max_value = default_max_val;
                 value = default_val;
+                prev_input_value = value;
+                prev_change_value = value;
                 $bs_wrap.attr('tabindex', default_tab_index);
                 refreshControls(true);
                 bar_slider_object.enable();
