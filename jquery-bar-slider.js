@@ -17,6 +17,8 @@
     DEPENDENCIES:
         jQuery library
         domxy
+    NOTES:
+        Tries to emulate some of the natural behaviours of Chrome's default range input.
 */
 /*global Boolean, Math, Number, document, window, jQuery, module*/
 /*jslint bitwise: false, unparam: true*/
@@ -146,16 +148,14 @@ if (typeof String.prototype.trim !== "function") {
         }
         function getComputedValue(computed_max) {
             var val = value;
-            if (!user_set_value) {
-                if (computed_max === undef) {
-                    computed_max = getComputedMax();
-                }
-                if (val > computed_max) {
-                    val = computed_max;
-                }
-                if (val < min_value) {
-                    val = min_value;
-                }
+            if (computed_max === undef) {
+                computed_max = getComputedMax();
+            }
+            if (val > computed_max) {
+                val = computed_max;
+            }
+            if (val < min_value) {
+                val = min_value;
             }
             return val;
         }
@@ -236,7 +236,7 @@ if (typeof String.prototype.trim !== "function") {
                     refreshControls(true);
                     return bar_slider_object;
                 }
-                return getComputedValue(max_sub);
+                return (user_set_value) ? value : getComputedValue(max_sub);
             },
             attachTo: function (arg) {
                 $bs_wrap.appendTo(arg);
@@ -335,7 +335,7 @@ if (typeof String.prototype.trim !== "function") {
                 //$bs_range_bar.css(css_dimension_prop, (rate * 100) + '%');
                 max_sub = getComputedMax();
                 if (max_sub >= min_value) {
-                    prev_input_value = getComputedValue(max_sub);
+                    prev_input_value = (user_set_value) ? value : getComputedValue(max_sub);
                     calculated_value = min_value + (rate * (max_sub - min_value));
                     if (disabled === false) {
                         if (calculated_value !== prev_input_value) {
@@ -351,7 +351,7 @@ if (typeof String.prototype.trim !== "function") {
             };
             docWinEventHandler = function () {
                 //console.log('docWinEventHandler');
-                var value_sub = getComputedValue();
+                var value_sub = (user_set_value) ? value : getComputedValue();
                 active = false;
                 if (disabled === false) {
                     if (prev_change_value !== value_sub) {
