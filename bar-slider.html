@@ -12,6 +12,10 @@
             body {
                 padding: 10px;
             }
+            
+            .bar-slider.bs-horizontal-type .bs-range-cover {
+                background: transparent url(v_bar_marker.png) no-repeat center center;
+            }
         </style>
         <link rel="stylesheet" href="bar-slider.css" type="text/css" />
         <link rel="stylesheet" href="bs-es.css" type="text/css" />
@@ -37,6 +41,7 @@
                 }).on('change', function (event, value) {
                     console.log('change: ' + value);
                 });
+                slider.getElement().css('width', 147).css('height', 24);
             </script>
         </div>
         <div>
@@ -56,5 +61,46 @@
                 });
             </script>
         </div>
+        <p>
+            <input id="range-1" type="range" min="0" max="100" step="1" value="50" />
+            <script type="text/javascript">
+                var range = document.getElementById('range-1');
+                range.addEventListener('input', function () {
+                    console.log('input: ' + this.value);
+                }, false);
+                range.addEventListener('change', function () {
+                    console.log('change: ' + this.value);
+                }, false);
+            </script>
+            <input id="range-2" type="range" min="0" max="50" step="1" value="10" />
+            <script type="text/javascript">
+                var range2 = document.getElementById('range-2');
+                range2.addEventListener('input', function () {
+                    console.log('input: ' + this.value);
+                }, false);
+                range2.addEventListener('change', function () {
+                    console.log('change: ' + this.value);
+                }, false);
+            </script>
+            <input id="range-3" type="range" min="100" step="1" value="90" />
+            <script type="text/javascript">
+                var range3 = document.getElementById('range-3');
+                range3.addEventListener('input', function () {
+                    console.log('input: ' + this.value);
+                }, false);
+                range3.addEventListener('change', function () {
+                    console.log('change: ' + this.value);
+                }, false);
+            </script>
+        </p>
+        <script type="text/javascript">
+            range.min = 60;
+            console.log('range value: ' + range.value);
+            range.max = 20;
+            console.log('range value: ' + range.value);
+            
+            slider.min(60).max(20);
+            console.log(slider.value());
+        </script>
     </body>
 </html>

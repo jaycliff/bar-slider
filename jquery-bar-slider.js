@@ -19,7 +19,8 @@
         domxy
 */
 /*global Boolean, Math, Number, document, window, jQuery, module*/
-/*jshint bitwise: false, unparam: true*/
+/*jslint bitwise: false, unparam: true*/
+/*jshint bitwise: false, unused: false*/
 if (typeof Number.toInteger !== "function") {
     Number.toInteger = function (arg) {
         "use strict";
@@ -84,7 +85,7 @@ if (typeof String.prototype.trim !== "function") {
             max_value = default_max_val,
             max_sub,
             value,
-            value_sub,
+            user_set_value = false,
             prev_input_value,
             prev_change_value,
             bar_slider_object,
@@ -93,11 +94,15 @@ if (typeof String.prototype.trim !== "function") {
             default_max_val = Number(options.max) || 0;
             max_value = default_max_val;
         }
-        if (is_options_valid && Object.prototype.hasOwnProperty.call(options, 'value')) {
-            max_sub = max_value;
-            if ((max_sub < min_value) && (min_value < 100)) {
-                max_sub = 100;
+        function getComputedMax() {
+            var max = max_value;
+            if ((max < min_value) && (min_value < 100)) {
+                max = 100;
             }
+            return max;
+        }
+        if (is_options_valid && Object.prototype.hasOwnProperty.call(options, 'value')) {
+            max_sub = getComputedMax();
             default_val = Number(options.value) || 0;
             if (default_val > max_sub) {
                 default_val = max_sub;
@@ -139,27 +144,32 @@ if (typeof String.prototype.trim !== "function") {
                 .on('transitionend', removeTransitionClass);
             transition_class_added = true;
         }
+        function getComputedValue(computed_max) {
+            var val = value;
+            if (!user_set_value) {
+                if (computed_max === undef) {
+                    computed_max = getComputedMax();
+                }
+                if (val > computed_max) {
+                    val = computed_max;
+                }
+                if (val < min_value) {
+                    val = min_value;
+                }
+            }
+            return val;
+        }
         // Updates the slider UI
         function refreshControls(animate) {
             var rate;
             if ($bs_wrap[0].parentNode === null) {
                 return; // Bail out since it's not attached to the DOM
             }
-            max_sub = max_value;
-            if ((max_sub < min_value) && (min_value < 100)) {
-                max_sub = 100;
-            }
+            max_sub = getComputedMax();
             if (max_sub <= min_value) {
                 rate = 0;
             } else {
-                value_sub = value;
-                if (value_sub > max_sub) {
-                    value_sub = max_sub;
-                }
-                if (value_sub < min_value) {
-                    value_sub = min_value;
-                }
-                rate = ((value_sub - min_value) / (max_sub - min_value));
+                rate = ((value - min_value) / (max_sub - min_value));
             }
             if (!!animate && (disabled === false) && (transition_class_added === false)) {
                 addTransitionClass();
@@ -178,6 +188,15 @@ if (typeof String.prototype.trim !== "function") {
             min: function (val) {
                 if (arguments.length > 0) {
                     min_value = Number(val) || 0;
+                    if (user_set_value) {
+                        max_sub = getComputedMax();
+                        if (value > max_sub) {
+                            value = max_sub;
+                        }
+                        if (value < min_value) {
+                            value = min_value;
+                        }
+                    }
                     refreshControls(true);
                     return bar_slider_object;
                 }
@@ -186,16 +205,22 @@ if (typeof String.prototype.trim !== "function") {
             max: function (val) {
                 if (arguments.length > 0) {
                     max_value = Number(val) || 0;
+                    if (user_set_value) {
+                        max_sub = getComputedMax();
+                        if (value > max_sub) {
+                            value = max_sub;
+                        }
+                        if (value < min_value) {
+                            value = min_value;
+                        }
+                    }
                     refreshControls(true);
                     return bar_slider_object;
                 }
                 return max_value;
             },
             value: function (val) {
-                max_sub = max_value;
-                if ((max_sub < min_value) && (min_value < 100)) {
-                    max_sub = 100;
-                }
+                max_sub = getComputedMax();
                 if (arguments.length > 0) {
                     val = Number(val) || 0;
                     if (val > max_sub) {
@@ -207,17 +232,11 @@ if (typeof String.prototype.trim !== "function") {
                     value = val;
                     prev_input_value = val;
                     prev_change_value = val;
+                    user_set_value = true;
                     refreshControls(true);
                     return bar_slider_object;
                 }
-                value_sub = value;
-                if (value_sub > max_sub) {
-                    value_sub = max_sub;
-                }
-                if (value_sub < min_value) {
-                    value_sub = min_value;
-                }
-                return value_sub;
+                return getComputedValue(max_sub);
             },
             attachTo: function (arg) {
                 $bs_wrap.appendTo(arg);
@@ -254,7 +273,7 @@ if (typeof String.prototype.trim !== "function") {
                     http://stackoverflow.com/questions/24670598/why-does-chrome-raise-a-mousemove-on-mousedown
             */
             mouseDownMouseMoveHandler = function (event) {
-                var nowX, nowY, base, dimension, rate;
+                var nowX, nowY, base, dimension, rate, calculated_value;
                 event.preventDefault(); // This somehow disables text-selection
                 switch (event.type) {
                 case 'touchstart':
@@ -314,23 +333,14 @@ if (typeof String.prototype.trim !== "function") {
                 }
                 rate = base / dimension;
                 //$bs_range_bar.css(css_dimension_prop, (rate * 100) + '%');
-                max_sub = max_value;
-                if ((max_sub < min_value) && (min_value < 100)) {
-                    max_sub = 100;
-                }
+                max_sub = getComputedMax();
                 if (max_sub >= min_value) {
-                    //prev_input_value = value;
-                    value_sub = value;
-                    if (value_sub > max_sub) {
-                        value_sub = max_sub;
-                    }
-                    if (value_sub < min_value) {
-                        value_sub = min_value;
-                    }
-                    prev_input_value = value_sub;
-                    value = min_value + (rate * (max_sub - min_value));
+                    prev_input_value = getComputedValue(max_sub);
+                    calculated_value = min_value + (rate * (max_sub - min_value));
                     if (disabled === false) {
-                        if (value !== prev_input_value) {
+                        if (calculated_value !== prev_input_value) {
+                            user_set_value = true;
+                            value = calculated_value;
                             trigger_param_list.push(value);
                             $bar_slider_object.triggerHandler('input', trigger_param_list);
                             trigger_param_list.length = 0;
@@ -341,13 +351,14 @@ if (typeof String.prototype.trim !== "function") {
             };
             docWinEventHandler = function () {
                 //console.log('docWinEventHandler');
+                var value_sub = getComputedValue();
                 active = false;
                 if (disabled === false) {
-                    if (prev_change_value !== value) {
-                        trigger_param_list.push(value);
+                    if (prev_change_value !== value_sub) {
+                        trigger_param_list.push(value_sub);
                         $bar_slider_object.triggerHandler('change', trigger_param_list);
                         trigger_param_list.length = 0;
-                        prev_change_value = value;
+                        prev_change_value = value_sub;
                     }
                 }
                 $bs_range_bar.removeClass('active');
