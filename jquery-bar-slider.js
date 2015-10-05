@@ -146,6 +146,9 @@ if (typeof String.prototype.trim !== "function") {
                 .on('transitionend', removeTransitionClass);
             transition_class_added = true;
         }
+        // getComputedValue is used to get the cured value if the user didn't enter any specific value ->
+        // -> either via direct ui input or the value method (both of which sets user_set_value to true) ->
+        // this is part of the default chrome range input behaviour simulation
         function getComputedValue(computed_max) {
             var val = value;
             if (computed_max === undef) {
@@ -292,6 +295,7 @@ if (typeof String.prototype.trim !== "function") {
                     nowY = event.pageY;
                     if (transition_class_added === false) {
                         addTransitionClass();
+                        console.log('Hey');
                     }
                     $bs_range_bar.addClass('active');
                     prevX = nowX;
