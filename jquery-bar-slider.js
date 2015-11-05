@@ -295,7 +295,7 @@ if (typeof String.prototype.trim !== "function") {
                     nowY = event.pageY;
                     if (transition_class_added === false) {
                         addTransitionClass();
-                        console.log('Hey');
+                        //console.log('Hey');
                     }
                     $bs_range_bar.addClass('active');
                     prevX = nowX;
