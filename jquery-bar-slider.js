@@ -96,6 +96,8 @@ if (typeof String.prototype.trim !== "function") {
             default_max_val = Number(options.max) || 0;
             max_value = default_max_val;
         }
+        // getComputedMax is used to get the cured max value if the user didn't enter any specific value ->
+        // this is part of the default chrome range input behaviour simulation
         function getComputedMax() {
             var max = max_value;
             if ((max < min_value) && (min_value < 100)) {
