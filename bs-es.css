@@ -2,7 +2,6 @@ span.bar-slider {
     -moz-box-sizing: border-box !important;
     -webkit-box-sizing: border-box !important;
     box-sizing: border-box !important;
-    cursor: pointer !important;
     display: inline-block !important;
     position: relative !important;
 }
