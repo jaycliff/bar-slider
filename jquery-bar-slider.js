@@ -224,7 +224,7 @@ if (typeof String.prototype.trim !== "function") {
                 }
                 return max_value;
             },
-            value: function (val) {
+            value: function (val, animate) {
                 max_sub = getComputedMax();
                 if (arguments.length > 0) {
                     val = Number(val) || 0;
@@ -238,7 +238,7 @@ if (typeof String.prototype.trim !== "function") {
                     prev_input_value = val;
                     prev_change_value = val;
                     user_set_value = true;
-                    refreshControls(true);
+                    refreshControls(Boolean(animate));
                     return bar_slider_object;
                 }
                 return (user_set_value) ? value : getComputedValue(max_sub);
