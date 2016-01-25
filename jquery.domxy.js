@@ -19,7 +19,7 @@
     "use strict";
     var extend_options;
     function getWindow(elem) {
-        return jQuery.isWindow(elem) ? elem : elem.nodeType === 9 ? elem.defaultView || elem.parentWindow : false;
+        return $.isWindow(elem) ? elem : elem.nodeType === 9 ? elem.defaultView || elem.parentWindow : false;
     }
     function getDOMX(elem) {
         var doc_elem,
@@ -31,7 +31,7 @@
         }
         doc_elem = doc.documentElement;
         // Make sure it's not a disconnected DOM node
-        if (!jQuery.contains(doc_elem, elem)) {
+        if (!$.contains(doc_elem, elem)) {
             return 0;
         }
         // Compare to undefined instead of equating to "function" because getBoundingClientRect is an object (not a function) in older (and retarded) versions of IE.
@@ -51,7 +51,7 @@
         }
         doc_elem = doc.documentElement;
         // Make sure it's not a disconnected DOM node
-        if (!jQuery.contains(doc_elem, elem)) {
+        if (!$.contains(doc_elem, elem)) {
             return 0;
         }
         // Compare to undefined instead of equating to "function" because getBoundingClientRect is an object (not a function) in older (and retarded) versions of IE.
