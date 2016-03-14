@@ -360,12 +360,14 @@ if (typeof String.prototype.trim !== "function") {
                 var value_sub = (user_set_value) ? value : getComputedValue();
                 active = false;
                 if (disabled === false) {
+                    trigger_param_list.push(value_sub);
+                    // 'seek' event is like a forced-change event
+                    $bar_slider_object.triggerHandler('seek', trigger_param_list);
                     if (prev_change_value !== value_sub) {
-                        trigger_param_list.push(value_sub);
                         $bar_slider_object.triggerHandler('change', trigger_param_list);
-                        trigger_param_list.length = 0;
                         prev_change_value = value_sub;
                     }
+                    trigger_param_list.length = 0;
                 }
                 $bs_range_bar.removeClass('active');
                 $window.off('blur', docWinEventHandler);
