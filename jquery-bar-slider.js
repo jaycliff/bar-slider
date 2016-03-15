@@ -70,6 +70,7 @@ if (typeof String.prototype.trim !== "function") {
             $bs_range_base = $(document.createElement('span')),
             $bs_range_bar = $(document.createElement('span')),
             $bs_range_cover = $(document.createElement('span')),
+            $hot_swap_dummy = $(document.createElement('span')),
             trigger_param_list = [],
             $_proto = $.fn,
             default_tab_index = (is_options_valid && Number.toInteger(options.tabIndex)) || 0,
@@ -114,8 +115,9 @@ if (typeof String.prototype.trim !== "function") {
             if (default_val < min_value) {
                 default_val = min_value;
             }
+        } else {
+            default_val = (min_value >= max_value) ? min_value : (min_value + ((max_value - min_value) / 2));
         }
-        default_val = (min_value >= max_value) ? min_value : (min_value + ((max_value - min_value) / 2));
         value = default_val;
         prev_input_value = value;
         prev_change_value = value;
@@ -225,6 +227,25 @@ if (typeof String.prototype.trim !== "function") {
                 return max_value;
             },
             value: function (val, animate) {
+                max_sub = getComputedMax();
+                if (arguments.length > 0) {
+                    val = Number(val) || 0;
+                    if (val > max_sub) {
+                        val = max_sub;
+                    }
+                    if (val < min_value) {
+                        val = min_value;
+                    }
+                    value = val;
+                    prev_input_value = val;
+                    prev_change_value = val;
+                    user_set_value = true;
+                    refreshControls(Boolean(animate));
+                    return bar_slider_object;
+                }
+                return (user_set_value) ? value : getComputedValue(max_sub);
+            },
+            val: function (val, animate) {
                 max_sub = getComputedMax();
                 if (arguments.length > 0) {
                     val = Number(val) || 0;
@@ -425,7 +446,8 @@ if (typeof String.prototype.trim !== "function") {
             function resetStructure() {
                 var parentNode = $bs_wrap[0].parentNode;
                 if (parentNode !== null) {
-                    $bs_wrap.detach();
+                    //$bs_wrap.detach();
+                    $bs_wrap.replaceWith($hot_swap_dummy);
                 }
                 $bs_wrap
                     .removeAttr('class')
@@ -442,7 +464,8 @@ if (typeof String.prototype.trim !== "function") {
                     .removeAttr('style');
                 initializeParts();
                 if (parentNode !== null) {
-                    $bs_wrap.appendTo(parentNode);
+                    //$bs_wrap.appendTo(parentNode);
+                    $hot_swap_dummy.replaceWith($bs_wrap);
                 }
             }
             bar_slider_object.reset = function (hard) {
