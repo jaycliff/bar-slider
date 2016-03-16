@@ -277,7 +277,7 @@ if (typeof String.prototype.trim !== "function") {
                 } else {
                     $target = $(arg);
                 }
-                $target = $target.replaceWith($bs_wrap);
+                $bs_wrap.data('bs:swapped-element', $target.replaceWith($bs_wrap));
                 removeTransitionClass();
                 refreshControls();
                 return bar_slider_object;
