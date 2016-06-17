@@ -92,6 +92,16 @@
                     console.log('change: ' + this.value);
                 }, false);
             </script>
+            <input id="range-4" type="range" min="0" max="100" step="0.01" />
+            <script type="text/javascript">
+                var range4 = document.getElementById('range-4');
+                range4.addEventListener('input', function () {
+                    console.log('input: ' + this.value);
+                }, false);
+                range4.addEventListener('change', function () {
+                    console.log('change: ' + this.value);
+                }, false);
+            </script>
         </p>
         <script type="text/javascript">
             range.min = 60;

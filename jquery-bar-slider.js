@@ -31,6 +31,12 @@ if (typeof Number.toInteger !== "function") {
         return (arg !== arg) ? 0 : (arg === 0 || arg === Infinity || arg === -Infinity) ? arg : (arg > 0) ? Math.floor(arg) : Math.ceil(arg);
     };
 }
+if (typeof Number.isFinite !== "function") {
+    Number.isFinite = function isFinite(value) {
+        "use strict";
+        return typeof value === "number" && isFinite(value);
+    };
+}
 if (typeof String.prototype.trim !== "function") {
     String.prototype.trim = function () {
         "use strict";
@@ -71,6 +77,8 @@ if (typeof String.prototype.trim !== "function") {
             $bs_range_bar = $(document.createElement('span')),
             $bs_range_cover = $(document.createElement('span')),
             $hot_swap_dummy = $(document.createElement('span')),
+            hasOwnProperty = Object.prototype.hasOwnProperty,
+            parts_list = [$bs_wrap, $bs_range_base, $bs_range_bar, $bs_range_cover],
             trigger_param_list = [],
             $_proto = $.fn,
             default_tab_index = (is_options_valid && Number.toInteger(options.tabIndex)) || 0,
@@ -93,7 +101,7 @@ if (typeof String.prototype.trim !== "function") {
             prev_change_value,
             bar_slider_object,
             $bar_slider_object;
-        if (is_options_valid && Object.prototype.hasOwnProperty.call(options, 'max')) {
+        if (is_options_valid && hasOwnProperty.call(options, 'max')) {
             default_max_val = Number(options.max) || 0;
             max_value = default_max_val;
         }
@@ -106,7 +114,7 @@ if (typeof String.prototype.trim !== "function") {
             }
             return max;
         }
-        if (is_options_valid && Object.prototype.hasOwnProperty.call(options, 'value')) {
+        if (is_options_valid && hasOwnProperty.call(options, 'value')) {
             max_sub = getComputedMax();
             default_val = Number(options.value) || 0;
             if (default_val > max_sub) {
@@ -194,34 +202,40 @@ if (typeof String.prototype.trim !== "function") {
             },
             min: function (val) {
                 if (arguments.length > 0) {
-                    min_value = Number(val) || 0;
-                    if (user_set_value) {
-                        max_sub = getComputedMax();
-                        if (value > max_sub) {
-                            value = max_sub;
+                    val = Number(val) || 0;
+                    if (Number.isFinite(val)) {
+                        min_value = val;
+                        if (user_set_value) {
+                            max_sub = getComputedMax();
+                            if (value > max_sub) {
+                                value = max_sub;
+                            }
+                            if (value < min_value) {
+                                value = min_value;
+                            }
                         }
-                        if (value < min_value) {
-                            value = min_value;
-                        }
+                        refreshControls(true);
                     }
-                    refreshControls(true);
                     return bar_slider_object;
                 }
                 return min_value;
             },
             max: function (val) {
                 if (arguments.length > 0) {
-                    max_value = Number(val) || 0;
-                    if (user_set_value) {
-                        max_sub = getComputedMax();
-                        if (value > max_sub) {
-                            value = max_sub;
+                    val = Number(val) || 0;
+                    if (Number.isFinite(val)) {
+                        max_value = val;
+                        if (user_set_value) {
+                            max_sub = getComputedMax();
+                            if (value > max_sub) {
+                                value = max_sub;
+                            }
+                            if (value < min_value) {
+                                value = min_value;
+                            }
                         }
-                        if (value < min_value) {
-                            value = min_value;
-                        }
+                        refreshControls(true);
                     }
-                    refreshControls(true);
                     return bar_slider_object;
                 }
                 return max_value;
@@ -290,7 +304,31 @@ if (typeof String.prototype.trim !== "function") {
         bar_slider_object = $bar_slider_object[0];
         // Event-handling setup
         (function () {
-            var mouseDownMouseMoveHandler, docWinEventHandler, prevX = 0, prevY = 0;
+            var genericEventHandler, docWinEventHandler, prevX = 0, prevY = 0;
+            function moveSlider(rate, animate) {
+                var calculated_value;
+                if (rate < 0) {
+                    rate = 0;
+                } else if (rate > 1) {
+                    rate = 1;
+                }
+                //$bs_range_bar.css(css_dimension_prop, (rate * 100) + '%');
+                max_sub = getComputedMax();
+                if (max_sub >= min_value) {
+                    prev_input_value = (user_set_value) ? value : getComputedValue(max_sub);
+                    calculated_value = min_value + (rate * (max_sub - min_value));
+                    if (disabled === false) {
+                        if (calculated_value !== prev_input_value) {
+                            user_set_value = true;
+                            value = calculated_value;
+                            trigger_param_list.push(value);
+                            $bar_slider_object.triggerHandler('input', trigger_param_list);
+                            trigger_param_list.length = 0;
+                        }
+                    }
+                }
+                refreshControls(animate);
+            }
             /*
                 The nowX-nowY-prevX-prevY tandem is a hack for browsers with stupid mousemove event implementation (Chrome, I'm looking at you!).
                 What is this stupidity you're talking about?
@@ -298,8 +336,8 @@ if (typeof String.prototype.trim !== "function") {
                 LINK(S):
                     http://stackoverflow.com/questions/24670598/why-does-chrome-raise-a-mousemove-on-mousedown
             */
-            mouseDownMouseMoveHandler = function (event) {
-                var nowX, nowY, base, dimension, rate, calculated_value;
+            genericEventHandler = function (event) {
+                var nowX, nowY, base, dimension, rate;
                 event.preventDefault(); // This somehow disables text-selection
                 switch (event.type) {
                 case 'touchstart':
@@ -324,7 +362,7 @@ if (typeof String.prototype.trim !== "function") {
                     prevX = nowX;
                     prevY = nowY;
                     $document
-                        .on('mousemove touchmove', mouseDownMouseMoveHandler)
+                        .on('mousemove touchmove', genericEventHandler)
                         .on('mouseup touchend', docWinEventHandler);
                     $window.on('blur', docWinEventHandler);
                     break;
@@ -359,25 +397,9 @@ if (typeof String.prototype.trim !== "function") {
                     base = 0;
                 }
                 rate = base / dimension;
-                //$bs_range_bar.css(css_dimension_prop, (rate * 100) + '%');
-                max_sub = getComputedMax();
-                if (max_sub >= min_value) {
-                    prev_input_value = (user_set_value) ? value : getComputedValue(max_sub);
-                    calculated_value = min_value + (rate * (max_sub - min_value));
-                    if (disabled === false) {
-                        if (calculated_value !== prev_input_value) {
-                            user_set_value = true;
-                            value = calculated_value;
-                            trigger_param_list.push(value);
-                            $bar_slider_object.triggerHandler('input', trigger_param_list);
-                            trigger_param_list.length = 0;
-                        }
-                    }
-                }
-                refreshControls(true);
+                moveSlider(rate, true);
             };
-            docWinEventHandler = function () {
-                //console.log('docWinEventHandler');
+            function changeEvent() {
                 var value_sub = (user_set_value) ? value : getComputedValue();
                 active = false;
                 if (disabled === false) {
@@ -390,12 +412,79 @@ if (typeof String.prototype.trim !== "function") {
                     }
                     trigger_param_list.length = 0;
                 }
+            }
+            docWinEventHandler = function () {
+                //console.log('docWinEventHandler');
+                changeEvent();
                 $bs_range_bar.removeClass('active');
                 $window.off('blur', docWinEventHandler);
                 $document
-                    .off('mousemove touchmove', mouseDownMouseMoveHandler)
+                    .off('mousemove touchmove', genericEventHandler)
                     .off('mouseup touchend', docWinEventHandler);
             };
+            function bsWrapMetaControlHandler(event) {
+                var rate, value_sub;
+                switch (event.type) {
+                case 'keydown':
+                    switch (event.which) {
+                    case 38:
+                    /* falls through */
+                    case 39:
+                        event.preventDefault();
+                        rate = ((((user_set_value) ? value : getComputedValue()) - min_value) / (max_sub - min_value));
+                        moveSlider(rate + 0.01);
+                        changeEvent();
+                        break;
+                    case 37:
+                    /* falls through */
+                    case 40:
+                        event.preventDefault();
+                        rate = ((((user_set_value) ? value : getComputedValue()) - min_value) / (max_sub - min_value));
+                        moveSlider(rate - 0.01);
+                        changeEvent();
+                        break;
+                    case 8:
+                        event.preventDefault();
+                        moveSlider(0);
+                        changeEvent();
+                        break;
+                    }
+                    break;
+                case 'keyup':
+                    switch (event.which) {
+                    case 37:
+                    /* falls through */
+                    case 38:
+                    /* falls through */
+                    case 39:
+                    /* falls through */
+                    case 40:
+                    /* falls through */
+                    case 8:
+                        $bs_range_bar.removeClass('active');
+                        break;
+                    }
+                    break;
+                case 'DOMMouseScroll':
+                    rate = ((((user_set_value) ? value : getComputedValue()) - min_value) / (max_sub - min_value));
+                    if (event.originalEvent.detail > 0) {
+                        moveSlider(rate - 0.01);
+                    } else {
+                        moveSlider(rate + 0.01);
+                    }
+                    changeEvent();
+                    break;
+                case 'mousewheel':
+                    rate = ((((user_set_value) ? value : getComputedValue()) - min_value) / (max_sub - min_value));
+                    if (event.originalEvent.wheelDelta < 0) {
+                        moveSlider(rate - 0.01);
+                    } else {
+                        moveSlider(rate + 0.01);
+                    }
+                    changeEvent();
+                    break;
+                }
+            }
             function enableDisableAid(event) {
                 switch (event.type) {
                 case 'touchstart':
@@ -412,7 +501,8 @@ if (typeof String.prototype.trim !== "function") {
                         .removeClass('disabled')
                         .attr('tabindex', tab_index)
                         .off('mousedown', enableDisableAid)
-                        .on('mousedown touchstart', mouseDownMouseMoveHandler);
+                        .on('keydown keyup mousewheel DOMMouseScroll', bsWrapMetaControlHandler)
+                        .on('mousedown touchstart', genericEventHandler);
                 }
                 return bar_slider_object;
             };
@@ -425,7 +515,8 @@ if (typeof String.prototype.trim !== "function") {
                     $bs_wrap
                         .addClass('disabled')
                         .removeAttr('tabindex')
-                        .off('mousedown touchstart', mouseDownMouseMoveHandler)
+                        .off('keydown keyup mousewheel DOMMouseScroll', bsWrapMetaControlHandler)
+                        .off('mousedown touchstart', genericEventHandler)
                         .on('mousedown', enableDisableAid);
                     removeTransitionClass();
                 }
@@ -444,24 +535,18 @@ if (typeof String.prototype.trim !== "function") {
                 return bar_slider_object;
             };
             function resetStructure() {
-                var parentNode = $bs_wrap[0].parentNode;
+                var parentNode = $bs_wrap[0].parentNode, i, length, item;
                 if (parentNode !== null) {
                     //$bs_wrap.detach();
                     $bs_wrap.replaceWith($hot_swap_dummy);
                 }
-                $bs_wrap
-                    .removeAttr('class')
-                    .removeAttr('style')
-                    .removeAttr('tabindex');
-                $bs_range_base
-                    .removeAttr('class')
-                    .removeAttr('style');
-                $bs_range_bar
-                    .removeAttr('class')
-                    .removeAttr('style');
-                $bs_range_cover
-                    .removeAttr('class')
-                    .removeAttr('style');
+                for (i = 0, length = parts_list.length; i < length; i += 1) {
+                    item = parts_list[i];
+                    item.removeAttr('class').removeAttr('style');
+                    if (item === $bs_wrap) {
+                        item.removeAttr('tabindex');
+                    }
+                }
                 initializeParts();
                 if (parentNode !== null) {
                     //$bs_wrap.appendTo(parentNode);
@@ -469,14 +554,14 @@ if (typeof String.prototype.trim !== "function") {
                 }
             }
             bar_slider_object.reset = function (hard) {
+                var i, length;
                 bar_slider_object.disable();
                 $bar_slider_object.off();
                 if (Boolean(hard) === true) {
                     resetStructure();
-                    $bs_wrap.off();
-                    $bs_range_base.off();
-                    $bs_range_bar.off();
-                    $bs_range_cover.off();
+                    for (i = 0, length = parts_list.length; i < length; i += 1) {
+                        parts_list[i].off();
+                    }
                 }
                 min_value = default_min_val;
                 max_value = default_max_val;
@@ -492,6 +577,7 @@ if (typeof String.prototype.trim !== "function") {
         //$bs_toggle_neck.on('transitionend', function () { alert('END'); });
         $bs_wrap.data('bs:host-object', bar_slider_object).data('bar-slider-object', bar_slider_object);
         bar_slider_object.enable();
+        refreshControls(false);
         return bar_slider_object;
     };
 }(window, (typeof jQuery === "function" && jQuery) || (typeof module === "object" && typeof module.exports === "function" && module.exports)));
