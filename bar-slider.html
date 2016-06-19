@@ -34,7 +34,7 @@
                 </span>
             </span>
             <script type="text/javascript">
-                var slider = $.createBarSlider();
+                var slider = $.createBarSlider({ max: 20, min: 0 });
                 slider.switchTo('#bs-structure-template-1');
                 slider.on('input', function (event, value) {
                     console.log('input: ' + value);
@@ -82,7 +82,7 @@
                     console.log('change: ' + this.value);
                 }, false);
             </script>
-            <input id="range-3" type="range" min="100" step="1" value="90" />
+            <input id="range-3" type="range" min="0" max="20" value="19" step="2" />
             <script type="text/javascript">
                 var range3 = document.getElementById('range-3');
                 range3.addEventListener('input', function () {
@@ -92,16 +92,44 @@
                     console.log('change: ' + this.value);
                 }, false);
             </script>
-            <input id="range-4" type="range" min="0" max="100" step="0.01" />
+            <input id="range-4" type="range" min="0" max="20" value="-2" step="-4" />
             <script type="text/javascript">
                 var range4 = document.getElementById('range-4');
+                range4.addEventListener('focus', function () {
+                    console.log('focus');
+                    console.log(document.activeElement);
+                }, false);
+                range4.addEventListener('mousedown', function () {
+                    console.log('mousedown');
+                    console.log(document.activeElement);
+                }, false);
                 range4.addEventListener('input', function () {
                     console.log('input: ' + this.value);
+                    console.log(document.activeElement);
                 }, false);
                 range4.addEventListener('change', function () {
                     console.log('change: ' + this.value);
                 }, false);
             </script>
+            <script type="text/javascript">
+                var bs = $.createBarSlider({ min: 1, max: 127, value: 0, step: 1 }).attachTo('body').on('input', function (event, value) {
+                    console.log(event.type + ': ' + value);
+                }).getElement().on('focus', function () {
+                    console.log('focus');
+                });
+                var test = Object.defineProperties({}, {
+                    "test": {
+                        get: function () {
+                            return this;
+                        }
+                    }
+                });
+                test.test;
+            </script>
+            <input type="text" name="input" />
+            <input type="checkbox" name="check" />
+            <input type="radio" name="radio" />
+            <textarea name="text"></textarea>
         </p>
         <script type="text/javascript">
             range.min = 60;
@@ -109,7 +137,8 @@
             range.max = 20;
             console.log('range value: ' + range.value);
             
-            slider.min(60).max(20);
+            //slider.min(60).max(20);
+            //console.log(slider.max());
             console.log(slider.value());
         </script>
     </body>

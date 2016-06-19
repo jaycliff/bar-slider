@@ -70,24 +70,6 @@ if (typeof String.prototype.trim !== "function") {
             return this.offset().top;
         };
     }
-    function decimalDigitsLength(num) {
-        var string, dot_index;
-        if (typeof num !== "number") {
-            throw new TypeError('parameter must be a number');
-        }
-        string = String(num);
-        dot_index = string.indexOf('.');
-        if (dot_index < 0) {
-            return 0;
-        }
-        return string.length - (dot_index + 1);
-    }
-    function valueByStep(value, step) {
-        if (typeof step !== "number") {
-            step = 1;
-        }
-        return +((Math.round(value / step) * step).toFixed(decimalDigitsLength(step)));
-    }
     $.createBarSlider = function (options) {
         var is_options_valid = $.type(options) === 'object',
             $bs_wrap = $(document.createElement('span')),
@@ -115,27 +97,14 @@ if (typeof String.prototype.trim !== "function") {
         properties = (function () {
             var obj = {},
                 temp,
-                user_set = false,
-                def_step = 1,
                 def_min = 0,
                 def_max = 100,
                 def_value,
                 do_median_value = true,
-                step = def_step,
                 min = def_min,
                 max = def_max,
                 value;
             if (is_options_valid) {
-                if (hasOwnProperty.call(options, 'step')) {
-                    temp = Number(options.step) || 1;
-                    if (temp < 0) {
-                        temp = 1;
-                    }
-                    if (Number.isFinite(temp)) {
-                        def_step = temp;
-                        step = def_step;
-                    }
-                }
                 if (hasOwnProperty.call(options, 'max')) {
                     temp = Number(options.max) || 0;
                     if (Number.isFinite(temp)) {
@@ -193,19 +162,10 @@ if (typeof String.prototype.trim !== "function") {
                         if (val < min) {
                             val = min;
                         }
-                        return (user_set) ? val : valueByStep(val, step);
+                        return val;
                     },
                     set: function (val) {
                         value = val;
-                        user_set = true;
-                    }
-                },
-                "step": {
-                    get: function () {
-                        return step;
-                    },
-                    set: function (val) {
-                        step = val;
                     }
                 }
             });
@@ -249,21 +209,15 @@ if (typeof String.prototype.trim !== "function") {
         }
         // Updates the slider UI
         function refreshControls(animate) {
-            var rate, value_sub, max_sub, min_sub;
+            var rate, value_sub = properties.value, max_sub = properties.max, min_sub = properties.min;
             if ($bs_wrap[0].parentNode === null) {
                 return; // Bail out since it's not attached to the DOM
             }
-            ////////////////////////////////////////////////////////////////////////
-            //console.log('Calculate rate');
-            value_sub = properties.value;
-            max_sub = properties.max;
-            min_sub = properties.min;
             if (max_sub <= min_sub) {
                 rate = 0;
             } else {
                 rate = ((value_sub - min_sub) / (max_sub - min_sub));
             }
-            ////////////////////////////////////////////////////////////////////////
             //console.log('VAL: ' + value_sub + ', MAX: ' + max_sub + ', MIN: ' + min_sub);
             if (!!animate && (disabled === false) && (transition_class_added === false)) {
                 addTransitionClass();
@@ -281,7 +235,7 @@ if (typeof String.prototype.trim !== "function") {
                 if (val < min_sub) {
                     val = min_sub;
                 }
-                properties.value = valueByStep(val, properties.step);
+                properties.value = val;
                 prev_input_value = val;
                 prev_change_value = val;
                 refreshControls(Boolean(animate));
@@ -296,19 +250,6 @@ if (typeof String.prototype.trim !== "function") {
                     return bar_slider_object;
                 }
                 return tab_index;
-            },
-            step: function (val) {
-                if (arguments.length > 0) {
-                    val = Number(val) || 1;
-                    if (val < 0) {
-                        val = 1;
-                    }
-                    if (Number.isFinite(val)) {
-                        properties.step = val;
-                    }
-                    return bar_slider_object;
-                }
-                return properties.step;
             },
             min: function (val) {
                 if (arguments.length > 0) {
@@ -372,7 +313,6 @@ if (typeof String.prototype.trim !== "function") {
                 if (max_sub >= min_sub) {
                     prev_input_value = properties.value;
                     calculated_value = min_sub + (rate * (max_sub - min_sub));
-                    calculated_value = valueByStep(calculated_value, properties.step);
                     if (disabled === false) {
                         if (calculated_value !== prev_input_value) {
                             properties.value = calculated_value;
@@ -414,7 +354,6 @@ if (typeof String.prototype.trim !== "function") {
                         //console.log('Hey');
                     }
                     $bs_range_bar.addClass('active');
-                    $bs_wrap.trigger('focus');
                     prevX = nowX;
                     prevY = nowY;
                     $document
@@ -482,26 +421,21 @@ if (typeof String.prototype.trim !== "function") {
                 var rate, value_sub = properties.value, max_sub = properties.max, min_sub = properties.min;
                 switch (event.type) {
                 case 'keydown':
-                    console.log(event.which);
                     switch (event.which) {
-                    case 33:
-                    /* falls through */
                     case 38:
                     /* falls through */
                     case 39:
                         event.preventDefault();
-                        rate = (((value_sub + properties.step) - min_sub) / (max_sub - min_sub));
-                        moveSlider(rate);
+                        rate = ((value_sub - min_sub) / (max_sub - min_sub));
+                        moveSlider(rate + 0.01);
                         changeEvent();
                         break;
-                    case 34:
-                    /* falls through */
                     case 37:
                     /* falls through */
                     case 40:
                         event.preventDefault();
-                        rate = (((value_sub - properties.step) - min_sub) / (max_sub - min_sub));
-                        moveSlider(rate);
+                        rate = ((value_sub - min_sub) / (max_sub - min_sub));
+                        moveSlider(rate - 0.01);
                         changeEvent();
                         break;
                     case 8:
@@ -527,22 +461,20 @@ if (typeof String.prototype.trim !== "function") {
                     }
                     break;
                 case 'DOMMouseScroll':
+                    rate = ((value_sub - min_sub) / (max_sub - min_sub));
                     if (event.originalEvent.detail > 0) {
-                        rate = (((value_sub - properties.step) - min_sub) / (max_sub - min_sub));
-                        moveSlider(rate);
+                        moveSlider(rate - 0.01);
                     } else {
-                        rate = (((value_sub + properties.step) - min_sub) / (max_sub - min_sub));
-                        moveSlider(rate);
+                        moveSlider(rate + 0.01);
                     }
                     changeEvent();
                     break;
                 case 'mousewheel':
+                    rate = ((value_sub - min_sub) / (max_sub - min_sub));
                     if (event.originalEvent.wheelDelta < 0) {
-                        rate = (((value_sub - properties.step) - min_sub) / (max_sub - min_sub));
-                        moveSlider(rate);
+                        moveSlider(rate - 0.01);
                     } else {
-                        rate = (((value_sub + properties.step) - min_sub) / (max_sub - min_sub));
-                        moveSlider(rate);
+                        moveSlider(rate + 0.01);
                     }
                     changeEvent();
                     break;
