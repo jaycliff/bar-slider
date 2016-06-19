@@ -479,10 +479,10 @@ if (typeof String.prototype.trim !== "function") {
                     .off('mouseup touchend', docWinEventHandler);
             };
             function bsWrapMetaControlHandler(event) {
-                var rate, value_sub = properties.value, max_sub = properties.max, min_sub = properties.min;
+                var rate, min_sub;
                 switch (event.type) {
                 case 'keydown':
-                    console.log(event.which);
+                    //console.log(event.which);
                     switch (event.which) {
                     case 33:
                     /* falls through */
@@ -490,7 +490,8 @@ if (typeof String.prototype.trim !== "function") {
                     /* falls through */
                     case 39:
                         event.preventDefault();
-                        rate = (((value_sub + properties.step) - min_sub) / (max_sub - min_sub));
+                        min_sub = properties.min;
+                        rate = (((properties.value + properties.step) - min_sub) / (properties.max - min_sub));
                         moveSlider(rate);
                         changeEvent();
                         break;
@@ -500,7 +501,8 @@ if (typeof String.prototype.trim !== "function") {
                     /* falls through */
                     case 40:
                         event.preventDefault();
-                        rate = (((value_sub - properties.step) - min_sub) / (max_sub - min_sub));
+                        min_sub = properties.min;
+                        rate = (((properties.value - properties.step) - min_sub) / (properties.max - min_sub));
                         moveSlider(rate);
                         changeEvent();
                         break;
@@ -527,21 +529,23 @@ if (typeof String.prototype.trim !== "function") {
                     }
                     break;
                 case 'DOMMouseScroll':
+                    min_sub = properties.min;
                     if (event.originalEvent.detail > 0) {
-                        rate = (((value_sub - properties.step) - min_sub) / (max_sub - min_sub));
+                        rate = (((properties.value - properties.step) - min_sub) / (properties.max - min_sub));
                         moveSlider(rate);
                     } else {
-                        rate = (((value_sub + properties.step) - min_sub) / (max_sub - min_sub));
+                        rate = (((properties.value + properties.step) - min_sub) / (properties.max - min_sub));
                         moveSlider(rate);
                     }
                     changeEvent();
                     break;
                 case 'mousewheel':
+                    min_sub = properties.min;
                     if (event.originalEvent.wheelDelta < 0) {
-                        rate = (((value_sub - properties.step) - min_sub) / (max_sub - min_sub));
+                        rate = (((properties.value - properties.step) - min_sub) / (properties.max - min_sub));
                         moveSlider(rate);
                     } else {
-                        rate = (((value_sub + properties.step) - min_sub) / (max_sub - min_sub));
+                        rate = (((properties.value + properties.step) - min_sub) / (properties.max - min_sub));
                         moveSlider(rate);
                     }
                     changeEvent();
