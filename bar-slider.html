@@ -110,6 +110,9 @@
                 range4.addEventListener('change', function () {
                     console.log('change: ' + this.value);
                 }, false);
+                range4.addEventListener('keydown', function (event) {
+                    event.preventDefault();
+                }, false);
             </script>
             <!--
             <input type="text" name="input" />
@@ -124,12 +127,18 @@
                     }
                     console.log(event.type + ': ' + value);
                     //this.disable();
-                }).on('focus blur mousedown mouseup click', function (event) {
+                }).on('focus blur mousedown mouseup click keydown mousewheel', function (event) {
                     var event_type = event.type;
                     console.log(event_type);
                     switch (event_type) {
                     case 'focus':
                         //this.fire('blur');
+                        break;
+                    case 'keydown':
+                        //event.preventDefault();
+                        break;
+                    case 'mousewheel':
+                        event.preventDefault();
                         break;
                     }
                 });
