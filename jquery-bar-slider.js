@@ -271,24 +271,6 @@ if (typeof String.prototype.trim !== "function") {
             $bs_range_bar.css(css_dimension_prop, (rate * 100) + '%');
             return bar_slider_object;
         }
-        function value(val, animate) {
-            var max_sub = properties.max, min_sub = properties.min;
-            if (arguments.length > 0) {
-                val = Number(val) || 0;
-                if (val > max_sub) {
-                    val = max_sub;
-                }
-                if (val < min_sub) {
-                    val = min_sub;
-                }
-                properties.value = valueByStep(val, properties.step);
-                prev_input_value = val;
-                prev_change_value = val;
-                refreshControls(Boolean(animate));
-                return bar_slider_object;
-            }
-            return properties.value;
-        }
         $bar_slider_object = $({
             tabIndex: function (index) {
                 if (arguments.length > 0) {
@@ -332,8 +314,26 @@ if (typeof String.prototype.trim !== "function") {
                 }
                 return properties.max;
             },
-            value: value,
-            val: value,
+            val: function (val, animate) {
+                var max_sub, min_sub;
+                if (arguments.length > 0) {
+                    max_sub = properties.max;
+                    min_sub = properties.min;
+                    val = Number(val) || 0;
+                    if (val > max_sub) {
+                        val = max_sub;
+                    }
+                    if (val < min_sub) {
+                        val = min_sub;
+                    }
+                    properties.value = valueByStep(val, properties.step);
+                    prev_input_value = val;
+                    prev_change_value = val;
+                    refreshControls(animate);
+                    return bar_slider_object;
+                }
+                return properties.value;
+            },
             attachTo: function (arg) {
                 $bs_wrap.appendTo(arg);
                 removeTransitionClass();
@@ -358,16 +358,30 @@ if (typeof String.prototype.trim !== "function") {
             }
         });
         bar_slider_object = $bar_slider_object[0];
+        Object.defineProperty(bar_slider_object, 'value', {
+            get: function () {
+                return properties.value;
+            },
+            set: function (val) {
+                var max_sub = properties.max, min_sub = properties.min;
+                val = Number(val) || 0;
+                if (val > max_sub) {
+                    val = max_sub;
+                }
+                if (val < min_sub) {
+                    val = min_sub;
+                }
+                properties.value = valueByStep(val, properties.step);
+                prev_input_value = val;
+                prev_change_value = val;
+                refreshControls();
+            }
+        });
         // Event-handling setup
         (function () {
-            var genericEventHandler, docWinEventHandler, prevX = 0, prevY = 0;
+            var genericEventHandler, docWinEventHandler, prevX = 0, prevY = 0, bs_do_not_trigger_map = {}, bs_wrap_do_not_trigger_map = {};
             function moveSlider(rate, animate) {
                 var calculated_value, max_sub = properties.max, min_sub = properties.min;
-                if (rate < 0) {
-                    rate = 0;
-                } else if (rate > 1) {
-                    rate = 1;
-                }
                 //$bs_range_bar.css(css_dimension_prop, (rate * 100) + '%');
                 if (max_sub >= min_sub) {
                     prev_input_value = properties.value;
@@ -394,7 +408,9 @@ if (typeof String.prototype.trim !== "function") {
             genericEventHandler = function (event) {
                 var nowX, nowY, base, dimension, rate;
                 event.preventDefault(); // This somehow disables text-selection
+                //console.log(event);
                 switch (event.type) {
+                // 'touchstart' and 'mousedown' events belong to $bs_wrap
                 case 'touchstart':
                     //console.log('touchstart');
                     // http://stackoverflow.com/questions/4780837/is-there-an-equivalent-to-e-pagex-position-for-touchstart-event-as-there-is-fo
@@ -402,8 +418,8 @@ if (typeof String.prototype.trim !== "function") {
                     event.pageY = event.originalEvent.touches[0].pageY;
                     /* falls through */
                 case 'mousedown':
-                    // Disable right-click
-                    if (event.which === 3) {
+                    // Prevent manual mousedown trigger and disable right-click. Manually-triggered events don't have an 'originalEvent' property
+                    if (event.originalEvent === undef || event.which === 3) {
                         return;
                     }
                     active = true;
@@ -438,6 +454,7 @@ if (typeof String.prototype.trim !== "function") {
                     }
                     break;
                 }
+                // 'width' or 'height'
                 dimension = $bs_range_base[css_dimension_prop]();
                 switch (type) {
                 case 'horizontal':
@@ -457,21 +474,21 @@ if (typeof String.prototype.trim !== "function") {
             };
             function changeEvent() {
                 var value_sub = properties.value;
-                active = false;
-                if (disabled === false) {
-                    trigger_param_list.push(value_sub);
-                    // 'seek' event is like a forced-change event
-                    $bar_slider_object.triggerHandler('seek', trigger_param_list);
-                    if (prev_change_value !== value_sub) {
-                        $bar_slider_object.triggerHandler('change', trigger_param_list);
-                        prev_change_value = value_sub;
-                    }
-                    trigger_param_list.length = 0;
+                trigger_param_list.push(value_sub);
+                // 'seek' event is like a forced-change event
+                $bar_slider_object.triggerHandler('seek', trigger_param_list);
+                if (prev_change_value !== value_sub) {
+                    $bar_slider_object.triggerHandler('change', trigger_param_list);
+                    prev_change_value = value_sub;
                 }
+                trigger_param_list.length = 0;
             }
             docWinEventHandler = function () {
                 //console.log('docWinEventHandler');
-                changeEvent();
+                active = false;
+                if (disabled === false) {
+                    changeEvent();
+                }
                 $bs_range_bar.removeClass('active');
                 $window.off('blur', docWinEventHandler);
                 $document
@@ -479,52 +496,53 @@ if (typeof String.prototype.trim !== "function") {
                     .off('mouseup touchend', docWinEventHandler);
             };
             function bsWrapMetaControlHandler(event) {
-                var rate, min_sub;
-                switch (event.type) {
+                var rate, min_sub, event_type = event.type;
+                switch (event_type) {
                 case 'keydown':
                     //console.log(event.which);
                     switch (event.which) {
-                    case 33:
-                    /* falls through */
-                    case 38:
-                    /* falls through */
-                    case 39:
-                        event.preventDefault();
-                        min_sub = properties.min;
-                        rate = (((properties.value + properties.step) - min_sub) / (properties.max - min_sub));
-                        moveSlider(rate);
-                        changeEvent();
-                        break;
-                    case 34:
-                    /* falls through */
-                    case 37:
-                    /* falls through */
-                    case 40:
-                        event.preventDefault();
-                        min_sub = properties.min;
-                        rate = (((properties.value - properties.step) - min_sub) / (properties.max - min_sub));
-                        moveSlider(rate);
-                        changeEvent();
-                        break;
-                    case 8:
+                    case 36: // Home key
                         event.preventDefault();
                         moveSlider(0);
                         changeEvent();
                         break;
-                    }
-                    break;
-                case 'keyup':
-                    switch (event.which) {
-                    case 37:
+                    case 33: // Page up key
                     /* falls through */
-                    case 38:
+                    case 38: // Up arrow key
                     /* falls through */
-                    case 39:
+                    case 39: // Right arrow key
+                        event.preventDefault();
+                        min_sub = properties.min;
+                        rate = (((properties.value + properties.step) - min_sub) / (properties.max - min_sub));
+                        if (rate > 1) {
+                            rate = 1;
+                        }
+                        moveSlider(rate);
+                        changeEvent();
+                        break;
+                    case 34: // Page down key
                     /* falls through */
-                    case 40:
+                    case 37: // Left arrow key
                     /* falls through */
-                    case 8:
-                        $bs_range_bar.removeClass('active');
+                    case 40: // Down arrow key
+                        event.preventDefault();
+                        min_sub = properties.min;
+                        rate = (((properties.value - properties.step) - min_sub) / (properties.max - min_sub));
+                        if (rate < 0) {
+                            rate = 0;
+                        }
+                        moveSlider(rate);
+                        changeEvent();
+                        break;
+                    case 35: // End key
+                        event.preventDefault();
+                        moveSlider(1);
+                        changeEvent();
+                        break;
+                    case 8: // Backspace key
+                        event.preventDefault();
+                        moveSlider(0);
+                        changeEvent();
                         break;
                     }
                     break;
@@ -532,9 +550,15 @@ if (typeof String.prototype.trim !== "function") {
                     min_sub = properties.min;
                     if (event.originalEvent.detail > 0) {
                         rate = (((properties.value - properties.step) - min_sub) / (properties.max - min_sub));
+                        if (rate < 0) {
+                            rate = 0;
+                        }
                         moveSlider(rate);
                     } else {
                         rate = (((properties.value + properties.step) - min_sub) / (properties.max - min_sub));
+                        if (rate > 1) {
+                            rate = 1;
+                        }
                         moveSlider(rate);
                     }
                     changeEvent();
@@ -543,13 +567,25 @@ if (typeof String.prototype.trim !== "function") {
                     min_sub = properties.min;
                     if (event.originalEvent.wheelDelta < 0) {
                         rate = (((properties.value - properties.step) - min_sub) / (properties.max - min_sub));
+                        if (rate < 0) {
+                            rate = 0;
+                        }
                         moveSlider(rate);
                     } else {
                         rate = (((properties.value + properties.step) - min_sub) / (properties.max - min_sub));
+                        if (rate > 1) {
+                            rate = 1;
+                        }
                         moveSlider(rate);
                     }
                     changeEvent();
                     break;
+                }
+                // trigger's extra parameters won't work with focus and blur events. See https://github.com/jquery/jquery/issues/1741
+                if (!bs_do_not_trigger_map[event_type]) {
+                    bs_wrap_do_not_trigger_map[event_type] = true;
+                    $bar_slider_object.triggerHandler(event_type);
+                    bs_wrap_do_not_trigger_map[event_type] = false;
                 }
             }
             function enableDisableAid(event) {
@@ -561,14 +597,26 @@ if (typeof String.prototype.trim !== "function") {
                     break;
                 }
             }
+            function bsEventHandler(event) {
+                var event_type = event.type;
+                // Prevent invocation when triggered manually from $bs_wrap
+                if (!bs_wrap_do_not_trigger_map[event_type]) {
+                    //console.log('triggered ' + event_type);
+                    bs_do_not_trigger_map[event_type] = true;
+                    $bs_wrap.trigger(event_type);
+                    bs_do_not_trigger_map[event_type] = false;
+                }
+            }
             bar_slider_object.enable = function () {
                 if (disabled === true) {
                     disabled = false;
+                    // $bar_slider_object's attached events should also be found on $bs_wrap
+                    $bar_slider_object.on('focus blur mousedown mouseup click', bsEventHandler);
                     $bs_wrap
                         .removeClass('disabled')
                         .attr('tabindex', tab_index)
                         .off('mousedown', enableDisableAid)
-                        .on('keydown keyup mousewheel DOMMouseScroll', bsWrapMetaControlHandler)
+                        .on('keydown mousewheel DOMMouseScroll focus blur mousedown mouseup click', bsWrapMetaControlHandler)
                         .on('mousedown touchstart', genericEventHandler);
                 }
                 return bar_slider_object;
@@ -579,10 +627,11 @@ if (typeof String.prototype.trim !== "function") {
                     if (active) {
                         docWinEventHandler(); // Manually trigger the 'mouseup / window blur' event handler
                     }
+                    $bar_slider_object.off('focus blur mousedown mouseup click', bsEventHandler);
                     $bs_wrap
                         .addClass('disabled')
                         .removeAttr('tabindex')
-                        .off('keydown keyup mousewheel DOMMouseScroll', bsWrapMetaControlHandler)
+                        .off('keydown mousewheel DOMMouseScroll focus blur mousedown mouseup click', bsWrapMetaControlHandler)
                         .off('mousedown touchstart', genericEventHandler)
                         .on('mousedown', enableDisableAid);
                     removeTransitionClass();
@@ -601,6 +650,12 @@ if (typeof String.prototype.trim !== "function") {
                 applier($_proto.off, $bar_slider_object, arguments);
                 return bar_slider_object;
             };
+            function trigger() {
+                applier($_proto.trigger, $bar_slider_object, arguments);
+                return bar_slider_object;
+            }
+            bar_slider_object.trigger = trigger;
+            bar_slider_object.fire = trigger;
             function resetStructure() {
                 var parentNode = $bs_wrap[0].parentNode, i, length, item;
                 if (parentNode !== null) {
