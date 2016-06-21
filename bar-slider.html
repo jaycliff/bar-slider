@@ -34,7 +34,7 @@
                 </span>
             </span>
             <script type="text/javascript">
-                var slider = $.createBarSlider({ max: 20, min: 0 });
+                var slider = $.createBarSlider({ max: 20, min: 0, step: 6 });
                 slider.switchTo('#bs-structure-template-1');
                 slider.on('input', function (event, value) {
                     console.log('input: ' + value);
@@ -82,7 +82,7 @@
                     console.log('change: ' + this.value);
                 }, false);
             </script>
-            <input id="range-3" type="range" min="0" max="20" value="19" step="2" />
+            <input id="range-3" type="range" min="0" max="20" value="19" step="6" />
             <script type="text/javascript">
                 var range3 = document.getElementById('range-3');
                 range3.addEventListener('input', function () {
@@ -99,9 +99,11 @@
                     console.log('focus');
                     console.log(document.activeElement);
                 }, false);
-                range4.addEventListener('mousedown', function () {
+                range4.addEventListener('mousedown', function (event) {
+                    console.log(event);
                     console.log('mousedown');
                     console.log(document.activeElement);
+                    event.preventDefault();
                 }, false);
                 range4.addEventListener('input', function () {
                     console.log('input: ' + this.value);
@@ -110,8 +112,8 @@
                 range4.addEventListener('change', function () {
                     console.log('change: ' + this.value);
                 }, false);
-                range4.addEventListener('keydown', function (event) {
-                    event.preventDefault();
+                range4.addEventListener('click', function () {
+                    console.log('click: ' + this.value);
                 }, false);
             </script>
             <!--
@@ -120,8 +122,9 @@
             <input type="radio" name="radio" id="radio" />
             <textarea name="text"></textarea>
             -->
+            <div id="bs-wrap"></div>
             <script type="text/javascript">
-                window.bs = $.createBarSlider({ min: 1, max: 127, value: 0, step: 1 }).attachTo('body').on('input', function (event, value) {
+                window.bs = $.createBarSlider({ min: 1, max: 127, value: 0, step: 1, width: '100%', height: '16px' }).attachTo('#bs-wrap').on('input', function (event, value) {
                     if (typeof value !== "number") {
                         value = this.val();
                     }
@@ -134,15 +137,54 @@
                     case 'focus':
                         //this.fire('blur');
                         break;
+                    case 'mousedown':
+                        /* falls through */
                     case 'keydown':
-                        //event.preventDefault();
-                        break;
+                        /* falls through */
                     case 'mousewheel':
                         event.preventDefault();
                         break;
                     }
-                });
+                }).getElement().prop('id', 'bs-3');
             </script>
+            <input type="text" name="text" />
         </p>
+        <div id="shitbox" style="float: left; border: solid red 1px; padding: 10px; background: pink;">
+            <span id="spanb" style="display: block; width: 32px; height: 32px; background: white; position: relative;">
+                <span id="spanc" style="position: absolute; top: 4px; left: 4px; right: 4px; bottom: 4px; background: #ccffcc;"></span>
+            </span>
+        </div>
+        <script type="text/javascript">
+            jQuery(document).ready(function ($) {
+                "use strict";
+                $('#shitbox').on('mousedown', function (event) {
+                    console.log('#shitbox: mousedown');
+                    console.log(event);
+                });
+                $('#spanb').on('mousedown', function (event) {
+                    console.log('#spanb: mousedown');
+                    console.log(event);
+                });
+            });
+            window.shitbox = document.getElementById('shitbox');
+            window.spanb = document.getElementById('spanb');
+            window.spanc = document.getElementById('spanc');
+            window.containsTarget = function containsTarget(target, node) {
+                var k, len, children;
+                if (target === node) {
+                    return true;
+                }
+                children = node.children;
+                len = children.length;
+                if (len > 0) {
+                    for (k = 0; k < len; k += 1) {
+                        if (containsTarget(target, children[k])) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            };
+        </script>
     </body>
 </html>

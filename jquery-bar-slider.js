@@ -230,6 +230,14 @@ if (typeof String.prototype.trim !== "function") {
             // Connect the parts
             $bs_wrap.append($bs_range_base);
             $bs_range_base.append($bs_range_bar, $bs_range_cover);
+            if (is_options_valid) {
+                if (hasOwnProperty.call(options, 'width')) {
+                    $bs_wrap.css('width', options.width);
+                }
+                if (hasOwnProperty.call(options, 'height')) {
+                    $bs_wrap.css('height', options.height);
+                }
+            }
         }
         initializeParts();
         // Some utilities
@@ -317,14 +325,14 @@ if (typeof String.prototype.trim !== "function") {
                 if (arguments.length > 0) {
                     max_sub = properties.max;
                     min_sub = properties.min;
-                    val = Number(val) || 0;
+                    val = valueByStep(Number(val) || 0, properties.step);
                     if (val > max_sub) {
                         val = max_sub;
                     }
                     if (val < min_sub) {
                         val = min_sub;
                     }
-                    properties.value = valueByStep(val, properties.step);
+                    properties.value = val;
                     prev_input_value = val;
                     prev_change_value = val;
                     refreshControls(animate);
@@ -362,14 +370,14 @@ if (typeof String.prototype.trim !== "function") {
             },
             set: function (val) {
                 var max_sub = properties.max, min_sub = properties.min;
-                val = Number(val) || 0;
+                val = valueByStep(Number(val) || 0, properties.step);
                 if (val > max_sub) {
                     val = max_sub;
                 }
                 if (val < min_sub) {
                     val = min_sub;
                 }
-                properties.value = valueByStep(val, properties.step);
+                properties.value = val;
                 prev_input_value = val;
                 prev_change_value = val;
                 refreshControls();
@@ -417,7 +425,7 @@ if (typeof String.prototype.trim !== "function") {
                     // Prevent manual mousedown trigger and disable right-click. Manually-triggered events don't have an 'originalEvent' property
                     if (event.originalEvent === undef || event.which === 3) {
                         return;
-                    }
+                    }   
                     active = true;
                     nowX = event.pageX;
                     nowY = event.pageY;
@@ -495,7 +503,7 @@ if (typeof String.prototype.trim !== "function") {
                 }
                 return function bsWrapMetaControlHandler(event) {
                     var rate, min_sub, event_type = event.type;
-                    // trigger's extra parameters won't work with focus and blur events. See https://github.com/jquery/jquery/issues/1741
+                    // trigger's extra parameters won't work with focus and blur events. See https://github.com/jquery/jquery/issues/1741}
                     if (!bs_do_not_trigger_map[event_type]) {
                         bs_wrap_do_not_trigger_map[event_type] = true;
                         $bar_slider_object.one(event_type, helper);
@@ -503,12 +511,16 @@ if (typeof String.prototype.trim !== "function") {
                         bs_wrap_do_not_trigger_map[event_type] = false;
                     }
                     if (is_default_prevented) {
-                        return;
+                        // prevent event default behaviour and propagation
+                        event.stopImmediatePropagation();
+                        return false;
                     }
                     switch (event_type) {
                     case 'keydown':
                         //console.log(event.which);
                         switch (event.which) {
+                        case 8: // Backspace key
+                        /* falls through */
                         case 36: // Home key
                             event.preventDefault();
                             moveSlider(0);
@@ -547,46 +559,43 @@ if (typeof String.prototype.trim !== "function") {
                             moveSlider(1);
                             changeEvent();
                             break;
-                        case 8: // Backspace key
-                            event.preventDefault();
-                            moveSlider(0);
-                            changeEvent();
-                            break;
                         }
                         break;
                     case 'DOMMouseScroll':
-                        min_sub = properties.min;
-                        if (event.originalEvent.detail > 0) {
-                            rate = (((properties.value - properties.step) - min_sub) / (properties.max - min_sub));
-                            if (rate < 0) {
-                                rate = 0;
+                        if (event.originalEvent) {
+                            min_sub = properties.min;
+                            if (event.originalEvent.detail > 0) {
+                                rate = (((properties.value - properties.step) - min_sub) / (properties.max - min_sub));
+                                if (rate < 0) {
+                                    rate = 0;
+                                }
+                            } else {
+                                rate = (((properties.value + properties.step) - min_sub) / (properties.max - min_sub));
+                                if (rate > 1) {
+                                    rate = 1;
+                                }
                             }
                             moveSlider(rate);
-                        } else {
-                            rate = (((properties.value + properties.step) - min_sub) / (properties.max - min_sub));
-                            if (rate > 1) {
-                                rate = 1;
-                            }
-                            moveSlider(rate);
+                            changeEvent();
                         }
-                        changeEvent();
                         break;
                     case 'mousewheel':
-                        min_sub = properties.min;
-                        if (event.originalEvent.wheelDelta < 0) {
-                            rate = (((properties.value - properties.step) - min_sub) / (properties.max - min_sub));
-                            if (rate < 0) {
-                                rate = 0;
+                        if (event.originalEvent) {
+                            min_sub = properties.min;
+                            if (event.originalEvent && event.originalEvent.wheelDelta < 0) {
+                                rate = (((properties.value - properties.step) - min_sub) / (properties.max - min_sub));
+                                if (rate < 0) {
+                                    rate = 0;
+                                }
+                            } else {
+                                rate = (((properties.value + properties.step) - min_sub) / (properties.max - min_sub));
+                                if (rate > 1) {
+                                    rate = 1;
+                                }
                             }
                             moveSlider(rate);
-                        } else {
-                            rate = (((properties.value + properties.step) - min_sub) / (properties.max - min_sub));
-                            if (rate > 1) {
-                                rate = 1;
-                            }
-                            moveSlider(rate);
+                            changeEvent();
                         }
-                        changeEvent();
                         break;
                     }
                 };
@@ -600,6 +609,7 @@ if (typeof String.prototype.trim !== "function") {
                     break;
                 }
             }
+            // bsEventHandler is mainly used for manually-triggered events (via the trigger / fire method)
             function bsEventHandler(event) {
                 var event_type = event.type;
                 // Prevent invocation when triggered manually from $bs_wrap
@@ -613,14 +623,15 @@ if (typeof String.prototype.trim !== "function") {
             bar_slider_object.enable = function () {
                 if (disabled === true) {
                     disabled = false;
-                    // $bar_slider_object's attached events should also be found on $bs_wrap
-                    $bar_slider_object.on('focus blur mousedown mouseup click keydown keyup keypress', bsEventHandler);
+                    // $bar_slider_object's attached events should also be found on $bs_wrap' bsWrapMetaControlHandler
+                    $bar_slider_object.on('focus blur touchstart mousewheel DOMMouseScroll mousedown mouseup click keydown keyup keypress', bsEventHandler);
+                    // Always attach bsWrapMetaControlHandler first
                     $bs_wrap
                         .removeClass('disabled')
                         .attr('tabindex', tab_index)
-                        .off('mousedown', enableDisableAid)
-                        .on('keydown mousewheel DOMMouseScroll focus blur mousedown mouseup click', bsWrapMetaControlHandler)
-                        .on('mousedown touchstart', genericEventHandler);
+                        .on('focus blur touchstart mousewheel DOMMouseScroll mousedown mouseup click keydown keyup keypress', bsWrapMetaControlHandler)
+                        .on('mousedown touchstart', genericEventHandler)
+                        .off('mousedown', enableDisableAid);
                 }
                 return bar_slider_object;
             };
@@ -630,11 +641,11 @@ if (typeof String.prototype.trim !== "function") {
                     if (active) {
                         docWinEventHandler(); // Manually trigger the 'mouseup / window blur' event handler
                     }
-                    $bar_slider_object.off('focus blur mousedown mouseup click keydown keyup keypress', bsEventHandler);
+                    $bar_slider_object.off('focus blur touchstart mousewheel DOMMouseScroll mousedown mouseup click keydown keyup keypress', bsEventHandler);
                     $bs_wrap
                         .addClass('disabled')
                         .removeAttr('tabindex')
-                        .off('keydown mousewheel DOMMouseScroll focus blur mousedown mouseup click', bsWrapMetaControlHandler)
+                        .off('focus blur touchstart mousewheel DOMMouseScroll mousedown mouseup click keydown keyup keypress', bsWrapMetaControlHandler)
                         .off('mousedown touchstart', genericEventHandler)
                         .on('mousedown', enableDisableAid);
                     removeTransitionClass();
@@ -687,8 +698,8 @@ if (typeof String.prototype.trim !== "function") {
                     }
                 }
                 properties.reset();
-                prev_input_value = value;
-                prev_change_value = value;
+                prev_input_value = properties.value;
+                prev_change_value = prev_input_value;
                 $bs_wrap.attr('tabindex', default_tab_index);
                 refreshControls(true);
                 bar_slider_object.enable();
