@@ -298,23 +298,23 @@ if (typeof String.prototype.trim !== "function") {
                 }
                 return properties.step;
             },
-            min: function (val) {
+            min: function (val, animate) {
                 if (arguments.length > 0) {
                     val = Number(val) || 0;
                     if (Number.isFinite(val)) {
                         properties.min = val;
-                        refreshControls(true);
+                        refreshControls(animate);
                     }
                     return bar_slider_object;
                 }
                 return properties.min;
             },
-            max: function (val) {
+            max: function (val, animate) {
                 if (arguments.length > 0) {
                     val = Number(val) || 0;
                     if (Number.isFinite(val)) {
                         properties.max = val;
-                        refreshControls(true);
+                        refreshControls(animate);
                     }
                     return bar_slider_object;
                 }
