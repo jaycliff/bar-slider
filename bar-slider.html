@@ -44,7 +44,7 @@
                 slider.getElement().css('width', 147).css('height', 24);
             </script>
         </div>
-        <div>
+        <div style="height: 150px; overflow-y: auto;">
             <span id="bs-structure-template-2" class="bar-slider bs-vertical-type bs-wrap">
                 <span class="bs-range-base">
                     <span class="bs-range-bar"></span>
@@ -58,6 +58,8 @@
                     console.log('input: ' + value);
                 }).on('change', function (event, value) {
                     console.log('change: ' + value);
+                }).on('mousewheel', function (event) {
+                    event.preventDefault();
                 });
             </script>
         </div>
@@ -122,9 +124,32 @@
             <input type="radio" name="radio" id="radio" />
             <textarea name="text"></textarea>
             -->
-            <div id="bs-wrap"></div>
+            <div id="bs-wrap" style="width: 50%; overflow-x: auto;">
+                <input id="range-scroll" type="range" min="1" max="127" value="" step="1" style="width: 150%;" />
+            </div>
             <script type="text/javascript">
-                window.bs = $.createBarSlider({ min: 1, max: 127, value: 0, step: 1, width: '100%', height: '16px' }).attachTo('#bs-wrap').on('input', function (event, value) {
+                var $bs_wrap = $('#bs-wrap').on('mousedown mouseup mousemove click', function (event) {
+                    switch (event.type) {
+                    case 'mousewheel':
+                        console.log('#bs-wrap: mousewheel');
+                        break;
+                    case 'mousedown':
+                        console.log('#bs-wrap: mousedown');
+                        break;
+                    case 'mouseup':
+                        console.log('#bs-wrap: mouseup');
+                        break;
+                    /*
+                    case 'mousemove':
+                        console.log('#bs-wrap: mousemove');
+                        break;
+                    */
+                    case 'click':
+                        console.log('#bs-wrap: click');
+                        break;
+                    }
+                });
+                window.bs = $.createBarSlider({ min: 1, max: 127, value: 0, step: 1, width: '150%', height: '16px' }).attachTo($bs_wrap).on('input', function (event, value) {
                     if (typeof value !== "number") {
                         value = this.val();
                     }
@@ -132,7 +157,7 @@
                     //this.disable();
                 }).on('focus blur mousedown mouseup click keydown mousewheel', function (event) {
                     var event_type = event.type;
-                    console.log(event_type);
+                    console.log('BS: ' + event_type);
                     switch (event_type) {
                     case 'focus':
                         //this.fire('blur');
@@ -146,6 +171,28 @@
                         break;
                     }
                 }).getElement().prop('id', 'bs-3');
+                $('#range-scroll').on('mousedown mouseup mousemove click', function (event) {
+                    event.preventDefault();
+                    switch (event.type) {
+                    case 'mousewheel':
+                        console.log('#range-scroll: mousewheel');
+                        break;
+                    case 'mousedown':
+                        console.log('#range-scroll: mousedown');
+                        break;
+                    case 'mouseup':
+                        console.log('#range-scroll: mouseup');
+                        break;
+                    /*
+                    case 'mousemove':
+                        console.log('#range-scroll: mousemove');
+                        break;
+                    */
+                    case 'click':
+                        console.log('#range-scroll: click');
+                        break;
+                    }
+                });
             </script>
             <input type="text" name="text" />
         </p>
