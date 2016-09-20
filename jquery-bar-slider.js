@@ -24,7 +24,7 @@
 /*jslint bitwise: false, unparam: true*/
 /*jshint bitwise: false, unused: false*/
 if (typeof Number.toInteger !== "function") {
-    Number.toInteger = function (arg) {
+    Number.toInteger = function toInteger(arg) {
         "use strict";
         // ToInteger conversion
         arg = Number(arg);
@@ -38,18 +38,20 @@ if (typeof Number.isFinite !== "function") {
     };
 }
 if (typeof String.prototype.trim !== "function") {
-    String.prototype.trim = function () {
+    String.prototype.trim = function trim() {
         "use strict";
         return this.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
     };
 }
-(function (window, $, undef) {
+(function createBarSliderSetup(window, $, undef) {
     "use strict";
     var $document = $(document),
         $window = $(window),
+        floor = Math.floor,
+        round = Math.round,
         applier = (function () {
             var list = [];
-            return function (func, obj, args) {
+            return function applier(func, obj, args) {
                 var i, length = args.length, result;
                 list.length = 0;
                 for (i = 0; i < length; i += 1) {
@@ -61,12 +63,12 @@ if (typeof String.prototype.trim !== "function") {
             };
         }());
     if (typeof $.fn.getX !== "function") {
-        $.fn.getX = function () {
+        $.fn.getX = function getX() {
             return this.offset().left;
         };
     }
     if (typeof $.fn.getY !== "function") {
-        $.fn.getY = function () {
+        $.fn.getY = function getY() {
             return this.offset().top;
         };
     }
@@ -82,13 +84,17 @@ if (typeof String.prototype.trim !== "function") {
         }
         return string.length - (dot_index + 1);
     }
-    function valueByStep(value, step) {
-        if (typeof step !== "number") {
-            step = 1;
+    function valueByStep(value, step, round_type) {
+        var multiplier = Math.pow(10, decimalDigitsLength(step));
+        if (!round_type) {
+            round_type = 'round';
         }
-        return +((Math.round(value / step) * step).toFixed(decimalDigitsLength(step)));
+        //console.log('VALUE: ' + value + ', STEP: ' + step + ', MULTIPLIER: ' + multiplier);
+        value = round(value * multiplier);
+        step = round(step * multiplier);
+        return (Math[round_type](value / step) * step) / multiplier;
     }
-    $.createBarSlider = function (options) {
+    $.createBarSlider = function createBarSlider(options) {
         var is_options_valid = $.type(options) === 'object',
             $bs_wrap = $(document.createElement('span')),
             $bs_range_base = $(document.createElement('span')),
@@ -96,6 +102,7 @@ if (typeof String.prototype.trim !== "function") {
             $bs_range_cover = $(document.createElement('span')),
             $hot_swap_dummy = $(document.createElement('span')),
             hasOwnProperty = Object.prototype.hasOwnProperty,
+            updateControls,
             parts_list = [$bs_wrap, $bs_range_base, $bs_range_bar, $bs_range_cover],
             trigger_param_list = [],
             $_proto = $.fn,
@@ -176,6 +183,11 @@ if (typeof String.prototype.trim !== "function") {
                         max = val;
                     }
                 },
+                "maxRaw": {
+                    get: function () {
+                        return max;
+                    }
+                },
                 "min": {
                     get: function () {
                         return min;
@@ -209,7 +221,7 @@ if (typeof String.prototype.trim !== "function") {
                     }
                 }
             });
-            obj.reset = function () {
+            obj.reset = function reset() {
                 max = def_max;
                 min = def_min;
                 value = def_value;
@@ -254,7 +266,7 @@ if (typeof String.prototype.trim !== "function") {
             transition_class_added = true;
         }
         // Updates the slider UI
-        function refreshControls(animate) {
+        updateControls = function update(animate) {
             var rate, value_sub, max_sub, min_sub;
             if ($bs_wrap[0].parentNode === null) {
                 return; // Bail out since it's not attached to the DOM
@@ -275,17 +287,17 @@ if (typeof String.prototype.trim !== "function") {
             }
             $bs_range_bar.css(css_dimension_prop, (rate * 100) + '%');
             return bar_slider_object;
-        }
+        };
         // Create the jQuery-fied bar slider object (http://api.jquery.com/jQuery/#working-with-plain-objects)
         $bar_slider_object = $({
-            tabIndex: function (index) {
+            tabIndex: function tabIndex(index) {
                 if (arguments.length > 0) {
                     $bs_wrap.attr('tabindex', Number.toInteger(index));
                     return bar_slider_object;
                 }
                 return tab_index;
             },
-            step: function (val) {
+            step: function step(val) {
                 if (arguments.length > 0) {
                     val = Number(val) || 1;
                     if (val < 0) {
@@ -298,36 +310,37 @@ if (typeof String.prototype.trim !== "function") {
                 }
                 return properties.step;
             },
-            min: function (val, animate) {
+            min: function min(val, animate) {
                 if (arguments.length > 0) {
                     val = Number(val) || 0;
                     if (Number.isFinite(val)) {
                         properties.min = val;
-                        refreshControls(animate);
+                        updateControls(animate);
                     }
                     return bar_slider_object;
                 }
                 return properties.min;
             },
-            max: function (val, animate) {
+            max: function max(val, animate) {
                 if (arguments.length > 0) {
                     val = Number(val) || 0;
                     if (Number.isFinite(val)) {
                         properties.max = val;
-                        refreshControls(animate);
+                        updateControls(animate);
                     }
                     return bar_slider_object;
                 }
-                return properties.max;
+                return properties.maxRaw;
             },
-            val: function (val, animate) {
-                var max_sub, min_sub;
+            val: function value(val, animate) {
+                var max_sub, min_sub, step_sub;
                 if (arguments.length > 0) {
                     max_sub = properties.max;
                     min_sub = properties.min;
-                    val = valueByStep(Number(val) || 0, properties.step);
+                    step_sub = properties.step;
+                    val = valueByStep(Number(val) || 0, step_sub);
                     if (val > max_sub) {
-                        val = max_sub;
+                        val = valueByStep(max_sub, step_sub, 'floor');
                     }
                     if (val < min_sub) {
                         val = min_sub;
@@ -335,18 +348,18 @@ if (typeof String.prototype.trim !== "function") {
                     properties.value = val;
                     prev_input_value = val;
                     prev_change_value = val;
-                    refreshControls(animate);
+                    updateControls(animate);
                     return bar_slider_object;
                 }
                 return properties.value;
             },
-            attachTo: function (arg) {
+            attachTo: function attachTo(arg) {
                 $bs_wrap.appendTo(arg);
                 removeTransitionClass();
-                refreshControls();
+                updateControls();
                 return bar_slider_object;
             },
-            switchTo: function (arg) {
+            switchTo: function switchTo(arg) {
                 var $target;
                 if (arg instanceof $) {
                     $target = arg;
@@ -355,11 +368,11 @@ if (typeof String.prototype.trim !== "function") {
                 }
                 $bs_wrap.data('bs:swapped-element', $target.replaceWith($bs_wrap));
                 removeTransitionClass();
-                refreshControls();
+                updateControls();
                 return bar_slider_object;
             },
-            refresh: refreshControls,
-            getElement: function () {
+            update: updateControls,
+            getElement: function getElement() {
                 return $bs_wrap;
             }
         });
@@ -369,10 +382,10 @@ if (typeof String.prototype.trim !== "function") {
                 return properties.value;
             },
             set: function (val) {
-                var max_sub = properties.max, min_sub = properties.min;
-                val = valueByStep(Number(val) || 0, properties.step);
+                var step_sub = properties.step, max_sub = properties.max, min_sub = properties.min;
+                val = valueByStep(Number(val) || 0, step_sub);
                 if (val > max_sub) {
-                    val = max_sub;
+                    val = valueByStep(max_sub, step_sub, 'floor');
                 }
                 if (val < min_sub) {
                     val = min_sub;
@@ -380,7 +393,7 @@ if (typeof String.prototype.trim !== "function") {
                 properties.value = val;
                 prev_input_value = val;
                 prev_change_value = val;
-                refreshControls();
+                updateControls();
             }
         });
         // Event-handling setup
@@ -391,7 +404,7 @@ if (typeof String.prototype.trim !== "function") {
                 if (max_sub >= min_sub) {
                     prev_input_value = properties.value;
                     calculated_value = min_sub + (rate * (max_sub - min_sub));
-                    calculated_value = valueByStep(calculated_value, properties.step);
+                    calculated_value = valueByStep(calculated_value, properties.step, 'floor');
                     if (disabled === false) {
                         if (calculated_value !== prev_input_value) {
                             properties.value = calculated_value;
@@ -401,7 +414,7 @@ if (typeof String.prototype.trim !== "function") {
                         }
                     }
                 }
-                refreshControls(animate);
+                updateControls(animate);
             }
             /*
                 The nowX-nowY-prevX-prevY tandem is a hack for browsers with stupid mousemove event implementation (Chrome, I'm looking at you!).
@@ -421,7 +434,7 @@ if (typeof String.prototype.trim !== "function") {
                 }
                 trigger_param_list.length = 0;
             }
-            docWinEventHandler = function () {
+            docWinEventHandler = function docWinEventHandler() {
                 active = false;
                 if (disabled === false) {
                     changeEvent();
@@ -439,7 +452,7 @@ if (typeof String.prototype.trim !== "function") {
                     is_propagation_stopped = event.isPropagationStopped();
                     is_immediate_propagation_stopped = event.isImmediatePropagationStopped();
                 }
-                genericEventHandler = function (event) {
+                genericEventHandler = function genericEventHandler(event) {
                     var nowX, nowY, base, dimension, rate;
                     event.preventDefault(); // This somehow disables text-selection
                     //console.log(event);
@@ -489,10 +502,10 @@ if (typeof String.prototype.trim !== "function") {
                     dimension = $bs_range_base[css_dimension_prop]();
                     switch (type) {
                     case 'horizontal':
-                        base = Math.floor(nowX - $bs_range_bar.getX());
+                        base = floor(nowX - $bs_range_bar.getX());
                         break;
                     case 'vertical':
-                        base = dimension - Math.floor(nowY - ($bs_range_base.getY() + parseInt($bs_range_base.css('border-top-width'), 10)));
+                        base = dimension - floor(nowY - ($bs_range_base.getY() + parseInt($bs_range_base.css('border-top-width'), 10)));
                         break;
                     }
                     if (base > dimension) {
@@ -636,7 +649,7 @@ if (typeof String.prototype.trim !== "function") {
                     bs_do_not_trigger_map[event_type] = false;
                 }
             }
-            bar_slider_object.enable = function () {
+            bar_slider_object.enable = function enable() {
                 if (disabled === true) {
                     disabled = false;
                     // $bar_slider_object's attached events should also be found on $bs_wrap' bsWrapMetaControlHandler
@@ -651,7 +664,7 @@ if (typeof String.prototype.trim !== "function") {
                 }
                 return bar_slider_object;
             };
-            bar_slider_object.disable = function () {
+            bar_slider_object.disable = function disable() {
                 if (disabled === false) {
                     disabled = true;
                     if (active) {
@@ -668,15 +681,15 @@ if (typeof String.prototype.trim !== "function") {
                 }
                 return bar_slider_object;
             };
-            bar_slider_object.on = function () {
+            bar_slider_object.on = function on() {
                 applier($_proto.on, $bar_slider_object, arguments);
                 return bar_slider_object;
             };
-            bar_slider_object.one = function () {
+            bar_slider_object.one = function one() {
                 applier($_proto.one, $bar_slider_object, arguments);
                 return bar_slider_object;
             };
-            bar_slider_object.off = function () {
+            bar_slider_object.off = function off() {
                 applier($_proto.off, $bar_slider_object, arguments);
                 return bar_slider_object;
             };
@@ -703,7 +716,7 @@ if (typeof String.prototype.trim !== "function") {
                     $hot_swap_dummy.replaceWith($bs_wrap);
                 }
             }
-            bar_slider_object.reset = function (hard) {
+            bar_slider_object.reset = function reset(hard) {
                 var i, length;
                 bar_slider_object.disable();
                 $bar_slider_object.off();
@@ -717,7 +730,7 @@ if (typeof String.prototype.trim !== "function") {
                 prev_input_value = properties.value;
                 prev_change_value = prev_input_value;
                 $bs_wrap.attr('tabindex', default_tab_index);
-                refreshControls(true);
+                updateControls(true);
                 bar_slider_object.enable();
                 return bar_slider_object;
             };
@@ -725,7 +738,7 @@ if (typeof String.prototype.trim !== "function") {
         //$bs_toggle_neck.on('transitionend', function () { alert('END'); });
         $bs_wrap.data('bs:host-object', bar_slider_object).data('bar-slider-object', bar_slider_object);
         bar_slider_object.enable();
-        refreshControls(false);
+        updateControls(false);
         return bar_slider_object;
     };
 }(window, (typeof jQuery === "function" && jQuery) || (typeof module === "object" && typeof module.exports === "function" && module.exports)));
