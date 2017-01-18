@@ -493,6 +493,8 @@ if (typeof String.prototype.trim !== "function") {
                         if (nowX === prevX && nowY === prevY) {
                             return; // Bail out, since it's a faux mousemove event
                         }
+                        prevX = nowX;
+                        prevY = nowY;
                         if (transition_class_added === true) {
                             removeTransitionClass();
                         }
