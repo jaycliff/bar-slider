@@ -434,7 +434,8 @@ if (typeof String.prototype.trim !== "function") {
                 }
                 trigger_param_list.length = 0;
             }
-            docWinEventHandler = function docWinEventHandler() {
+            docWinEventHandler = function docWinEventHandler(event) {
+                event.preventDefault();
                 active = false;
                 if (disabled === false) {
                     changeEvent();
