@@ -1,5 +1,5 @@
 /*
-    Copyright 2016 Jaycliff Arcilla of Eversun Software Philippines Corporation
+    Copyright 2017 Jaycliff Arcilla of Eversun Software Philippines Corporation
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -398,7 +398,7 @@ if (typeof String.prototype.trim !== "function") {
         });
         // Event-handling setup
         (function () {
-            var genericEventHandler, docWinEventHandler, bsWrapMetaControlHandler, prevX = 0, prevY = 0, bs_do_not_trigger_map = {}, bs_wrap_do_not_trigger_map = {};
+            var genericEventHandler, docWinEventHandler, bsWrapMetaControlHandler, prevX = 0, prevY = 0, bs_do_not_trigger_map = {}, bs_wrap_do_not_trigger_map = {}, touch_identifier = -1;
             function moveSlider(rate, animate) {
                 var calculated_value, max_sub = properties.max, min_sub = properties.min;
                 if (max_sub >= min_sub) {
@@ -435,6 +435,24 @@ if (typeof String.prototype.trim !== "function") {
                 trigger_param_list.length = 0;
             }
             docWinEventHandler = function docWinEventHandler(event) {
+                var changedTouches, k, len, cancel = true;
+                if (event.type === 'touchend') {
+                    changedTouches = (event.originalEvent && event.originalEvent.changedTouches) || null;
+                    if (!changedTouches) {
+                        return;
+                    }
+                    for (k = 0, len = changedTouches.length; k < len; k += 1) {
+                        if (touch_identifier === changedTouches[k].identifier) {
+                            //console.log(touch_identifier);
+                            touch_identifier = -1;
+                            cancel = false;
+                            break;
+                        }
+                    }
+                    if (cancel) {
+                        return;
+                    }
+                }
                 event.preventDefault();
                 active = false;
                 if (disabled === false) {
@@ -454,21 +472,27 @@ if (typeof String.prototype.trim !== "function") {
                     is_immediate_propagation_stopped = event.isImmediatePropagationStopped();
                 }
                 genericEventHandler = function genericEventHandler(event) {
-                    var nowX, nowY, base, dimension, rate;
-                    event.preventDefault(); // This somehow disables text-selection
+                    var nowX, nowY, base, dimension, rate, changedTouches, touch_object, k, len, cancel = true;
                     //console.log(event);
                     switch (event.type) {
                     // 'touchstart' and 'mousedown' events belong to $bs_wrap
                     case 'touchstart':
                         // http://stackoverflow.com/questions/4780837/is-there-an-equivalent-to-e-pagex-position-for-touchstart-event-as-there-is-fo
-                        event.pageX = event.originalEvent.touches[0].pageX;
-                        event.pageY = event.originalEvent.touches[0].pageY;
+                        changedTouches = (event.originalEvent && event.originalEvent.changedTouches) || null;
+                        if (!changedTouches) {
+                            return;
+                        }
+                        touch_object = changedTouches[changedTouches.length - 1];
+                        event.pageX = touch_object.pageX;
+                        event.pageY = touch_object.pageY;
+                        touch_identifier = touch_object.identifier;
                         /* falls through */
                     case 'mousedown':
                         // Prevent manual mousedown trigger and disable right-click. Manually-triggered events don't have an 'originalEvent' property
                         if (event.originalEvent === undef || event.which === 3 || is_default_prevented) {
                             return;
                         }
+                        event.preventDefault(); // This somehow disables text-selection
                         active = true;
                         nowX = event.pageX;
                         nowY = event.pageY;
@@ -485,8 +509,22 @@ if (typeof String.prototype.trim !== "function") {
                         $window.on('blur', docWinEventHandler);
                         break;
                     case 'touchmove':
-                        event.pageX = event.originalEvent.touches[0].pageX;
-                        event.pageY = event.originalEvent.touches[0].pageY;
+                        changedTouches = (event.originalEvent && event.originalEvent.changedTouches) || null;
+                        if (!changedTouches) {
+                            return;
+                        }
+                        for (k = 0, len = changedTouches.length; k < len; k += 1) {
+                            touch_object = changedTouches[k];
+                            if (touch_identifier === touch_object.identifier) {
+                                event.pageX = touch_object.pageX;
+                                event.pageY = touch_object.pageY;
+                                cancel = false;
+                                break;
+                            }
+                        }
+                        if (cancel) {
+                            return;
+                        }
                         /* falls through */
                     case 'mousemove':
                         nowX = event.pageX;
@@ -494,6 +532,7 @@ if (typeof String.prototype.trim !== "function") {
                         if (nowX === prevX && nowY === prevY) {
                             return; // Bail out, since it's a faux mousemove event
                         }
+                        event.preventDefault();
                         prevX = nowX;
                         prevY = nowY;
                         if (transition_class_added === true) {
