@@ -695,12 +695,12 @@ if (typeof String.prototype.trim !== "function") {
                 if (disabled === true) {
                     disabled = false;
                     // $bar_slider_object's attached events should also be found on $bs_wrap' bsWrapMetaControlHandler
-                    $bar_slider_object.on('focus blur touchstart mousewheel DOMMouseScroll mousedown mouseup click keydown keyup keypress', bsEventHandler);
+                    $bar_slider_object.on('focus blur touchstart touchmove touchend mousewheel DOMMouseScroll mousedown mousemove mouseup click keydown keyup keypress', bsEventHandler);
                     // Always attach bsWrapMetaControlHandler first
                     $bs_wrap
                         .removeClass('disabled')
                         .attr('tabindex', tab_index)
-                        .on('focus blur touchstart mousewheel DOMMouseScroll mousedown mouseup click keydown keyup keypress', bsWrapMetaControlHandler)
+                        .on('focus blur touchstart touchmove touchend mousewheel DOMMouseScroll mousedown mousemove mouseup click keydown keyup keypress', bsWrapMetaControlHandler)
                         .on('mousedown touchstart', genericEventHandler)
                         .off('mousedown', enableDisableAid);
                 }
@@ -712,11 +712,11 @@ if (typeof String.prototype.trim !== "function") {
                     if (active) {
                         docWinEventHandler(); // Manually trigger the 'mouseup / window blur' event handler
                     }
-                    $bar_slider_object.off('focus blur touchstart mousewheel DOMMouseScroll mousedown mouseup click keydown keyup keypress', bsEventHandler);
+                    $bar_slider_object.off('focus blur touchstart touchmove touchend mousewheel DOMMouseScroll mousedown mousemove mouseup click keydown keyup keypress', bsEventHandler);
                     $bs_wrap
                         .addClass('disabled')
                         .removeAttr('tabindex')
-                        .off('focus blur touchstart mousewheel DOMMouseScroll mousedown mouseup click keydown keyup keypress', bsWrapMetaControlHandler)
+                        .off('focus blur touchstart touchmove touchend mousewheel DOMMouseScroll mousedown mousemove mouseup click keydown keyup keypress', bsWrapMetaControlHandler)
                         .off('mousedown touchstart', genericEventHandler)
                         .on('mousedown', enableDisableAid);
                     removeTransitionClass();
