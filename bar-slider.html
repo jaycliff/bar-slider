@@ -26,7 +26,7 @@
     </head>
     <body>
         <!-- Template by Jaycliff Arcilla -->
-        <div>
+        <div id="wrap-1">
             <span id="bs-structure-template-1" class="bar-slider bs-horizontal-type bs-wrap">
                 <span class="bs-range-base">
                     <span class="bs-range-bar"></span>
@@ -44,7 +44,20 @@
                 slider.getElement().css('width', 147).css('height', 24);
             </script>
         </div>
-        <div style="height: 150px; overflow-y: auto;">
+        <div id="wrap-2" style="height: 150px; overflow-y: auto;">
+            <input id="range-0" type="range" min="0" max="100" step="1" value="50" />
+            <script type="text/javascript">
+                var range0 = document.getElementById('range-0');
+                range0.addEventListener('keydown', function (event) {
+                    event.preventDefault();
+                }, false);
+                range0.addEventListener('input', function () {
+                    console.log('input: ' + this.value);
+                }, false);
+                range0.addEventListener('change', function () {
+                    console.log('change: ' + this.value);
+                }, false);
+            </script>
             <span id="bs-structure-template-2" class="bar-slider bs-vertical-type bs-wrap">
                 <span class="bs-range-base">
                     <span class="bs-range-bar"></span>
@@ -56,10 +69,16 @@
                 slider2.switchTo('#bs-structure-template-2');
                 slider2.on('input', function (event, value) {
                     console.log('input: ' + value);
+                }).on('touchmove', function () {
+                    //event.stopPropagation();
                 }).on('change', function (event, value) {
                     console.log('change: ' + value);
                 }).on('mousewheel', function (event) {
                     event.preventDefault();
+                    event.stopPropagation();
+                }).on('keydown', function (event) {
+                    //event.preventDefault();
+                    event.stopPropagation();
                 });
             </script>
         </div>
