@@ -15,6 +15,7 @@
     width: 20px;
 }
 .bar-slider.disabled {
+    cursor: default;
     opacity: 0.5;
 }
 .bs-range-base {

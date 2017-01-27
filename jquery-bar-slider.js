@@ -473,9 +473,7 @@ if (typeof String.prototype.trim !== "function") {
                 moveSlider(rate, true);
             };
             documentMouseMoveHandler = function documentMouseMoveHandler(event) {
-                var nowX, nowY;
-                nowX = event.pageX;
-                nowY = event.pageY;
+                var nowX = event.pageX, nowY = event.pageY;
                 if (nowX === prevX && nowY === prevY) {
                     return; // Bail out, since it's a faux mousemove event
                 }
@@ -511,7 +509,6 @@ if (typeof String.prototype.trim !== "function") {
                         event.preventDefault();
                     }
                     switch (event_type) {
-                    // 'touchstart' and 'mousedown' events belong to $bs_wrap
                     case 'touchstart':
                         // http://stackoverflow.com/questions/4780837/is-there-an-equivalent-to-e-pagex-position-for-touchstart-event-as-there-is-fo
                         changedTouches = (event.originalEvent && event.originalEvent.changedTouches) || null;
@@ -587,7 +584,7 @@ if (typeof String.prototype.trim !== "function") {
                     case 'touchcancel':
                         /* falls through */
                     case 'touchend':
-                        console.log(event_type);
+                        //console.log(event_type);
                         changedTouches = (event.originalEvent && event.originalEvent.changedTouches) || null;
                         if (!changedTouches) {
                             return;
@@ -741,7 +738,7 @@ if (typeof String.prototype.trim !== "function") {
                         .removeClass('disabled')
                         .attr('tabindex', tab_index)
                         .on('focus blur touchstart touchmove touchend touchcancel mousewheel DOMMouseScroll mousedown mousemove mouseup click keydown keyup keypress', bsWrapMetaControlHandler)
-                        .off('mousedown', enableDisableAid);
+                        .off('mousedown touchstart', enableDisableAid);
                 }
                 return bar_slider_object;
             };
@@ -756,7 +753,7 @@ if (typeof String.prototype.trim !== "function") {
                         .addClass('disabled')
                         .removeAttr('tabindex')
                         .off('focus blur touchstart touchmove touchend touchcancel mousewheel DOMMouseScroll mousedown mousemove mouseup click keydown keyup keypress', bsWrapMetaControlHandler)
-                        .on('mousedown', enableDisableAid);
+                        .on('mousedown touchstart', enableDisableAid);
                     removeTransitionClass();
                 }
                 return bar_slider_object;
